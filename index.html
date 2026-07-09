@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>タグるんです</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 <style>
   :root {
     --bg: #0F1117;
@@ -580,7 +581,7 @@
 
 <!-- backup banner (shown when localStorage unavailable) -->
 <div id="backup-banner" style="display:none;background:#78490B;color:#FDE68A;font-size:12px;padding:8px 16px;text-align:center;line-height:1.6">
-  ⚠ このブラウザでは自動保存できません。アプリを閉じる前に <strong>「データを保存」</strong> を押してください。
+  ⚠ このブラウザではデータの保存ができません。アプリを閉じる前に <strong>「データを保存」</strong> でバックアップしてください。
 </div>
 
 <input type="file" id="import-input" accept=".json" style="display:none">
@@ -754,39 +755,37 @@ let state = {
 };
 
 // ── Persist ──
-let _localStorageAvailable = false;
-
-function checkLocalStorage() {
+async function checkStorage() {
   try {
-    localStorage.setItem('__test__', '1');
-    localStorage.removeItem('__test__');
-    _localStorageAvailable = true;
+    await localforage.setItem('__test__', '1');
+    await localforage.removeItem('__test__');
   } catch(e) {
-    _localStorageAvailable = false;
     document.getElementById('backup-banner').style.display = 'block';
   }
 }
 
 function save() {
-  if (!_localStorageAvailable) return;
-  try {
-    localStorage.setItem('tagshot_tags', JSON.stringify(state.tags));
-    localStorage.setItem('tagshot_photos', JSON.stringify(state.photos));
-  } catch(e) {
-    // Storage full
-    _localStorageAvailable = false;
+  // Fire-and-forget: localForage (IndexedDB) has far more headroom than localStorage
+  localforage.setItem('tagshot_tags', state.tags).catch(err => {
+    console.warn('save tags failed', err);
     document.getElementById('backup-banner').style.display = 'block';
-  }
+  });
+  localforage.setItem('tagshot_photos', state.photos).catch(err => {
+    console.warn('save photos failed', err);
+    document.getElementById('backup-banner').style.display = 'block';
+  });
 }
 
-function load() {
-  if (!_localStorageAvailable) return;
+async function load() {
   try {
-    const tags = localStorage.getItem('tagshot_tags');
-    const photos = localStorage.getItem('tagshot_photos');
-    if (tags) state.tags = JSON.parse(tags);
-    if (photos) state.photos = JSON.parse(photos);
-  } catch(e) {}
+    const tags = await localforage.getItem('tagshot_tags');
+    const photos = await localforage.getItem('tagshot_photos');
+    if (tags) state.tags = tags;
+    if (photos) state.photos = photos;
+  } catch(e) {
+    console.warn('load failed', e);
+    document.getElementById('backup-banner').style.display = 'block';
+  }
   if (state.tags.length === 0) {
     DEFAULT_TAGS.forEach((name, i) => addTagData(name, i));
   }
@@ -1384,9 +1383,11 @@ function saveToCamera(photoId) {
 }
 
 // ── Init ──
-checkLocalStorage();
-load();
-renderTagGrid();
+(async function init() {
+  await checkStorage();
+  await load();
+  renderTagGrid();
+})();
 
 // Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(el => {
