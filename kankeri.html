@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>缶蹴り</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root{
+    --night: #171a2b;
+    --amber: #ffb84d;
+    --seeker: #e8604a;
+    --player: #5fd6c8;
+    --cream: #f4ecd8;
+    --cream-dim: #cabf9f;
+  }
+
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--night);
+    font-family: 'Noto Sans JP', sans-serif;
+    overflow: hidden;
+    touch-action: none;
+  }
+
+  #app{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; width:100%;
+    background: radial-gradient(ellipse at 50% 20%, #262b48 0%, var(--night) 65%);
+    padding: 10px 0;
+  }
+
+  .title-eyebrow{
+    font-family:'Kosugi Maru', sans-serif;
+    color: var(--amber);
+    letter-spacing: 0.35em;
+    font-size: 11px;
+    margin-bottom: 2px;
+    opacity: 0.85;
+  }
+  h1{
+    font-family:'Kosugi Maru', sans-serif;
+    color: var(--cream);
+    font-size: 26px;
+    margin: 0 0 10px 0;
+    text-shadow: 0 0 18px rgba(255,184,77,0.35);
+  }
+
+  #stage-wrap{
+    position: relative;
+    width: min(94vw, 520px);
+    aspect-ratio: 4/5;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(244,236,216,0.08), 0 20px 60px rgba(0,0,0,0.6);
+    background: #232c20;
+  }
+  canvas{ display:block; width:100%; height:100%; }
+
+  /* ---- overlay screens ---- */
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap: 12px;
+    padding: 24px;
+    background: rgba(17,19,34,0.92);
+    text-align:center;
+    font-family:'Kosugi Maru', sans-serif;
+    color: var(--cream);
+  }
+  .screen.hidden{ display:none; }
+  .screen p.lead{ color: var(--cream-dim); font-size:13px; margin:0 0 6px 0; line-height:1.7; }
+  .menu-btn{
+    width: 100%; max-width: 300px;
+    background: rgba(244,236,216,0.08);
+    border: 1px solid rgba(255,184,77,0.35);
+    color: var(--cream);
+    font-family:'Kosugi Maru', sans-serif;
+    font-size: 15px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .menu-btn:active{ background: rgba(255,184,77,0.25); }
+  .menu-btn.primary{ background: var(--amber); color:#211405; border:none; }
+  .menu-btn small{ display:block; color:var(--cream-dim); font-size:11px; margin-top:3px; font-family:'Noto Sans JP',sans-serif;}
+  .menu-btn.primary small{ color:#5c3f10; }
+
+  #code-display{
+    font-size: 30px;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    background: rgba(255,184,77,0.1);
+    border: 1px dashed rgba(255,184,77,0.5);
+    border-radius: 10px;
+    padding: 12px 22px;
+    margin: 6px 0;
+  }
+  #code-input{
+    font-family:'Kosugi Maru', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    text-align:center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(244,236,216,0.3);
+    background: rgba(255,255,255,0.06);
+    color: var(--cream);
+    width: 220px;
+    text-transform: lowercase;
+  }
+  #code-input::placeholder{ color: rgba(244,236,216,0.35); }
+
+  .role-row{ display:flex; gap:10px; }
+  .role-btn{
+    flex:1;
+    background: rgba(244,236,216,0.06);
+    border: 1px solid rgba(244,236,216,0.25);
+    color: var(--cream);
+    font-family:'Kosugi Maru', sans-serif;
+    font-size: 14px;
+    padding: 14px 8px;
+    border-radius: 10px;
+  }
+  .role-btn.sel{ border-color: var(--amber); background: rgba(255,184,77,0.18); color: var(--amber); }
+
+  .spinner{
+    width:22px; height:22px; border-radius:50%;
+    border: 3px solid rgba(255,184,77,0.25);
+    border-top-color: var(--amber);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .back-link{
+    position:absolute; top:12px; left:14px;
+    color: var(--cream-dim); font-size:12px;
+    font-family:'Kosugi Maru', sans-serif;
+    cursor:pointer;
+  }
+
+  #hud{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:center;
+    padding: 10px 14px;
+    font-family:'Kosugi Maru', sans-serif;
+    color: var(--cream);
+    font-size: 12px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0));
+    pointer-events:none;
+    letter-spacing: 0.03em;
+    z-index: 5;
+  }
+  #hud .lives{ display:flex; gap:5px; align-items:center; }
+  .life-dot{ width:9px; height:9px; border-radius:50%; background: var(--seeker); box-shadow:0 0 6px var(--seeker); }
+  .life-dot.lost{ background: rgba(255,255,255,0.15); box-shadow:none; }
+  #my-role-badge{
+    position:absolute; z-index:5;
+  }
+
+  #status-banner{
+    position:absolute; left:50%; top:44%;
+    transform: translate(-50%,-50%);
+    font-family:'Kosugi Maru', sans-serif;
+    color: var(--cream);
+    text-align:center;
+    background: rgba(17,19,34,0.88);
+    border: 1px solid rgba(255,184,77,0.4);
+    border-radius: 12px;
+    padding: 18px 24px;
+    display:none;
+    z-index: 8;
+  }
+  #status-banner .big{ font-size:21px; color:var(--amber); margin-bottom:6px; text-shadow:0 0 14px rgba(255,184,77,0.5); }
+  #status-banner .small{ font-size:12px; color:var(--cream-dim); margin-bottom:10px;}
+
+  #restart-btn{
+    font-family:'Kosugi Maru', sans-serif;
+    background: var(--amber);
+    color: #211405;
+    border:none;
+    padding: 9px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    display:none;
+    cursor:pointer;
+  }
+
+  #hint{
+    font-family:'Kosugi Maru', sans-serif;
+    color: var(--cream-dim);
+    font-size: 11.5px;
+    text-align:center;
+    margin-top: 10px;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="title-eyebrow">KAN KERI</div>
+  <h1>缶蹴り</h1>
+
+  <div id="stage-wrap">
+    <canvas id="game"></canvas>
+
+    <div id="hud" style="display:none;">
+      <div class="lives" id="lives"></div>
+      <div id="round-label">ROUND 1</div>
+    </div>
+    <div id="status-banner">
+      <div class="big" id="status-big"></div>
+      <div class="small" id="status-small"></div>
+      <button id="restart-btn">もう一度あそぶ</button>
+    </div>
+
+    <!-- MENU -->
+    <div id="screen-menu" class="screen">
+      <p class="lead">遊び方をえらんでね</p>
+      <button class="menu-btn primary" id="btn-mode-ai">🤖 ひとりであそぶ<small>AIの鬼から缶までしのびこもう</small></button>
+      <button class="menu-btn" id="btn-mode-online">🌐 友達とオンライン対戦<small>1人が鬼・1人が隠れる側になって勝負</small></button>
+    </div>
+
+    <!-- ONLINE: choose host/join -->
+    <div id="screen-online" class="screen hidden">
+      <div class="back-link" data-back="screen-menu">← もどる</div>
+      <p class="lead">部屋を作るか、コードを入力して参加</p>
+      <button class="menu-btn primary" id="btn-host">部屋を作る</button>
+      <button class="menu-btn" id="btn-join">コードで参加する</button>
+    </div>
+
+    <!-- ONLINE: host role select -->
+    <div id="screen-host-role" class="screen hidden">
+      <div class="back-link" data-back="screen-online">← もどる</div>
+      <p class="lead">あなたの役わりは?</p>
+      <div class="role-row">
+        <button class="role-btn" id="role-oni">🔦 鬼</button>
+        <button class="role-btn" id="role-hider">🏃 隠れる側</button>
+      </div>
+      <button class="menu-btn primary" id="btn-host-create" style="margin-top:10px;">部屋を作る</button>
+    </div>
+
+    <!-- ONLINE: host waiting -->
+    <div id="screen-host-wait" class="screen hidden">
+      <div class="back-link" data-back="screen-online">← もどる</div>
+      <p class="lead">このコードを友達に伝えてね</p>
+      <div id="code-display">------</div>
+      <div class="spinner" id="host-spinner"></div>
+      <p class="lead" id="host-wait-status">接続中…</p>
+      <button class="menu-btn" id="btn-host-retry" style="display:none;">もう一度試す</button>
+    </div>
+
+    <!-- ONLINE: join code entry -->
+    <div id="screen-join" class="screen hidden">
+      <div class="back-link" data-back="screen-online">← もどる</div>
+      <p class="lead">友達から聞いたコードを入力</p>
+      <input id="code-input" placeholder="例: kk-a1b2" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="menu-btn primary" id="btn-join-connect" style="margin-top:6px;">接続する</button>
+      <p class="lead" id="join-status" style="min-height:16px;"></p>
+    </div>
+  </div>
+
+  <p id="hint">画面をタッチしてドラッグで移動</p>
+</div>
+
+<script>window.__peerjsFailed = false;</script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" onerror="window.__peerjsFailed=true"></script>
+<script>
+  // fallback CDN if the first one didn't load within 4s
+  setTimeout(function(){
+    if(!window.Peer){
+      window.__peerjsFailed = true;
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+      s.onload = function(){ window.__peerjsFailed = false; };
+      s.onerror = function(){ window.__peerjsFailed = true; };
+      document.head.appendChild(s);
+    }
+  }, 4000);
+</script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const W = 400, H = 500;
+  canvas.width = W; canvas.height = H;
+
+  const livesEl = document.getElementById('lives');
+  const hud = document.getElementById('hud');
+  const roundLabel = document.getElementById('round-label');
+  const banner = document.getElementById('status-banner');
+  const bannerBig = document.getElementById('status-big');
+  const bannerSmall = document.getElementById('status-small');
+  const restartBtn = document.getElementById('restart-btn');
+  const hintEl = document.getElementById('hint');
+
+  // ---------- screen management ----------
+  const screens = ['screen-menu','screen-online','screen-host-role','screen-host-wait','screen-join'];
+  function showScreen(id){
+    screens.forEach(s=> document.getElementById(s).classList.toggle('hidden', s!==id));
+  }
+  document.querySelectorAll('.back-link').forEach(el=>{
+    el.addEventListener('click', ()=> showScreen(el.dataset.back));
+  });
+
+  // ---------- map ----------
+  function buildObstacles(){
+    return [
+      {x:80,  y:150, r:26},
+      {x:320, y:120, r:22},
+      {x:60,  y:340, r:24},
+      {x:340, y:330, r:26},
+      {x:150, y:260, r:20},
+      {x:260, y:420, r:22},
+      {x:200, y:80,  r:18},
+    ];
+  }
+  function randomizeObstacles(){
+    const list = [];
+    const count = 6 + Math.floor(Math.random()*3); // 6-8
+    let tries = 0;
+    while(list.length < count && tries < 400){
+      tries++;
+      const r = 16 + Math.random()*13;
+      const x = 36 + Math.random()*(W-72);
+      const y = 36 + Math.random()*(H-72);
+      if(Math.hypot(x-CAN.x, y-CAN.y) < 66+r) continue;
+      if(Math.hypot(x-HIDER_START.x, y-HIDER_START.y) < 56+r) continue;
+      if(Math.hypot(x-ONI_START.x, y-ONI_START.y) < 56+r) continue;
+      let ok = true;
+      for(const o of list){ if(Math.hypot(x-o.x,y-o.y) < o.r+r+16){ ok=false; break; } }
+      if(!ok) continue;
+      list.push({x,y,r});
+    }
+    obstacles = list;
+  }
+  let obstacles = buildObstacles();
+  const CAN = {x: W/2, y: H/2, r: 10};
+  const HIDER_START = {x: 40, y: H-40};
+  const ONI_START = {x: CAN.x, y: CAN.y - 60};
+
+  // ---------- generic entities ----------
+  let hider, oni;
+  let mode = null; // 'ai' | 'online'
+  let myRole = 'hider'; // for online mode: 'hider' | 'oni'
+  let lives, round, state, spotProgress;
+  let seekerWaypoints = [], seekerWpIndex = 0;
+  let oniTarget = null;
+  let oniTargetTimer = 0;
+  let onlineScore = {hider:0, oni:0};
+
+  function freshHider(){ return {x:HIDER_START.x, y:HIDER_START.y, r:9, speed:1.9, facing:0}; }
+  function freshOni(speed){ return {x:ONI_START.x, y:ONI_START.y, r:9, angle:Math.PI/2, speed:speed, visionRange:130, visionAngle:Math.PI/3}; }
+
+  function makeWaypoints(){
+    const rad = 95, n = 6, pts=[];
+    for(let i=0;i<n;i++){ const a=(i/n)*Math.PI*2; pts.push({x:CAN.x+Math.cos(a)*rad, y:CAN.y+Math.sin(a)*rad}); }
+    return pts;
+  }
+
+  // ---------- AI mode ----------
+  function startAiMode(){
+    mode='ai'; myRole='hider';
+    lives = 3; round = 1;
+    hud.style.display = 'flex';
+    hintEl.textContent = '画面をタッチしてドラッグで移動';
+    resetAiRound(1);
+    updateLivesUI();
+    screens.forEach(s=>document.getElementById(s).classList.add('hidden'));
+  }
+  function resetAiRound(r){
+    round = r;
+    roundLabel.textContent = 'ROUND ' + round;
+    randomizeObstacles();
+    hider = freshHider();
+    oni = freshOni(0.85 + (r-1)*0.18);
+    oni.visionRange = 130 + (r-1)*8;
+    oni.visionAngle = Math.PI/3 - Math.min(0.35,(r-1)*0.03);
+    oniTarget = null;
+    oniTargetTimer = 0;
+    spotProgress = 0;
+    state = 'playing';
+    banner.style.display='none';
+    restartBtn.style.display='none';
+  }
+  function updateSeekerAI(){
+    if(inVision()){
+      // spotted the hider: give chase directly, turning and moving faster
+      const dx = hider.x-oni.x, dy = hider.y-oni.y;
+      const d = Math.hypot(dx,dy);
+      const targetAngle = Math.atan2(dy,dx);
+      let diff = targetAngle - oni.angle;
+      while(diff>Math.PI) diff-=Math.PI*2;
+      while(diff<-Math.PI) diff+=Math.PI*2;
+      oni.angle += diff*0.18;
+      if(d>6){
+        oni.x += Math.cos(oni.angle)*oni.speed*1.25;
+        oni.y += Math.sin(oni.angle)*oni.speed*1.25;
+      }
+      resolveObstacleCollision(oni);
+      return;
+    }
+    if(!oniTarget || oniTargetTimer<=0) pickNewOniTarget();
+    oniTargetTimer -= 1;
+    const dx = oniTarget.x-oni.x, dy = oniTarget.y-oni.y;
+    const d = Math.hypot(dx,dy);
+    if(d<10){ pickNewOniTarget(); }
+    else{
+      const targetAngle = Math.atan2(dy,dx);
+      let diff = targetAngle - oni.angle;
+      while(diff>Math.PI) diff-=Math.PI*2;
+      while(diff<-Math.PI) diff+=Math.PI*2;
+      oni.angle += diff*0.08 + (Math.random()-0.5)*0.05;
+      oni.x += Math.cos(oni.angle)*oni.speed;
+      oni.y += Math.sin(oni.angle)*oni.speed;
+    }
+    resolveObstacleCollision(oni);
+  }
+
+  function pickNewOniTarget(){
+    let x,y,tries=0;
+    do{
+      x = 30 + Math.random()*(W-60);
+      y = 30 + Math.random()*(H-60);
+      tries++;
+    } while(tries<20 && obstacles.some(o=> Math.hypot(x-o.x,y-o.y) < o.r+18));
+    oniTarget = {x,y};
+    oniTargetTimer = 45 + Math.floor(Math.random()*90); // force a new heading every ~0.75-2.25s
+  }
+
+  // ---------- online mode ----------
+  let peer=null, conn=null, isHost=false, connected=false;
+  let lastSendTime=0;
+  const SEND_INTERVAL = 50; // ms
+
+  function genCode(){
+    const chars='abcdefghjkmnpqrstuvwxy23456789';
+    let s='';
+    for(let i=0;i<4;i++) s+=chars[Math.floor(Math.random()*chars.length)];
+    return 'kk-'+s;
+  }
+
+  function ensurePeerJs(cb, onFail, waited){
+    waited = waited || 0;
+    if(window.Peer){ cb(); return; }
+    if(waited > 9000){ onFail && onFail(); return; }
+    setTimeout(()=>ensurePeerJs(cb, onFail, waited+150), 150);
+  }
+
+  function destroyPeer(){
+    try{ if(peer && !peer.destroyed) peer.destroy(); }catch(e){}
+    peer = null; conn = null;
+  }
+
+  document.getElementById('btn-mode-ai').addEventListener('click', startAiMode);
+  document.getElementById('btn-mode-online').addEventListener('click', ()=> showScreen('screen-online'));
+  document.getElementById('btn-host').addEventListener('click', ()=>{
+    document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('sel'));
+    document.getElementById('role-oni').classList.add('sel');
+    window.__hostRole = 'oni';
+    showScreen('screen-host-role');
+  });
+  document.getElementById('btn-join').addEventListener('click', ()=> showScreen('screen-join'));
+
+  document.getElementById('role-oni').addEventListener('click', ()=>{
+    document.getElementById('role-oni').classList.add('sel');
+    document.getElementById('role-hider').classList.remove('sel');
+    window.__hostRole = 'oni';
+  });
+  document.getElementById('role-hider').addEventListener('click', ()=>{
+    document.getElementById('role-hider').classList.add('sel');
+    document.getElementById('role-oni').classList.remove('sel');
+    window.__hostRole = 'hider';
+  });
+
+  function startHostFlow(){
+    destroyPeer();
+    isHost = true;
+    myRole = window.__hostRole || 'oni';
+    showScreen('screen-host-wait');
+    document.getElementById('code-display').textContent = '接続中…';
+    document.getElementById('host-wait-status').textContent = '接続先を探しています…';
+    document.getElementById('host-spinner').style.display = 'block';
+    document.getElementById('btn-host-retry').style.display = 'none';
+
+    ensurePeerJs(()=>{
+      createHostPeer(0);
+    }, ()=>{
+      hostConnectFailed('通信ライブラリを読み込めませんでした。インターネット接続を確認してもう一度お試しください。');
+    });
+  }
+
+  function hostConnectFailed(message){
+    destroyPeer();
+    document.getElementById('code-display').textContent = 'エラー';
+    document.getElementById('host-spinner').style.display = 'none';
+    document.getElementById('host-wait-status').textContent = message;
+    document.getElementById('btn-host-retry').style.display = 'block';
+  }
+
+  function createHostPeer(attempt){
+    const code = genCode();
+    peer = new Peer(code, {debug:0});
+    let opened = false;
+    const timeoutId = setTimeout(()=>{
+      if(!opened){
+        hostConnectFailed('サーバーへの接続がタイムアウトしました。通信状況を確認して、もう一度お試しください。');
+      }
+    }, 12000);
+
+    peer.on('open', id=>{
+      opened = true;
+      clearTimeout(timeoutId);
+      document.getElementById('code-display').textContent = id;
+      document.getElementById('host-wait-status').textContent = '友達の参加を待っています…';
+    });
+    peer.on('connection', c=>{
+      conn = c;
+      setupConnection();
+      document.getElementById('host-wait-status').textContent = '接続しました!まもなく開始…';
+    });
+    peer.on('error', err=>{
+      clearTimeout(timeoutId);
+      const type = err && err.type;
+      if(type === 'unavailable-id' && attempt < 4){
+        // code collision: silently retry with a new code
+        try{ peer.destroy(); }catch(e){}
+        createHostPeer(attempt+1);
+        return;
+      }
+      opened = true; // prevent timeout message from also firing
+      hostConnectFailed('接続に失敗しました(' + (type || '不明なエラー') + ')。もう一度お試しください。');
+    });
+  }
+
+  document.getElementById('btn-host-create').addEventListener('click', startHostFlow);
+  document.getElementById('btn-host-retry').addEventListener('click', startHostFlow);
+
+  function startJoinFlow(){
+    const code = document.getElementById('code-input').value.trim().toLowerCase();
+    if(!code){ document.getElementById('join-status').textContent = 'コードを入力してください'; return; }
+    destroyPeer();
+    isHost = false;
+    document.getElementById('join-status').textContent = '接続中…';
+
+    ensurePeerJs(()=>{
+      peer = new Peer({debug:0});
+      let opened = false;
+      const timeoutId = setTimeout(()=>{
+        if(!opened){
+          destroyPeer();
+          document.getElementById('join-status').textContent = 'タイムアウトしました。通信状況を確認してもう一度お試しください。';
+        }
+      }, 12000);
+
+      peer.on('open', ()=>{
+        conn = peer.connect(code, {reliable:true});
+        const connTimeout = setTimeout(()=>{
+          if(!opened){
+            destroyPeer();
+            document.getElementById('join-status').textContent = '相手が見つかりませんでした。コードを確認してください。';
+          }
+        }, 8000);
+        conn.on('open', ()=>{
+          opened = true;
+          clearTimeout(timeoutId);
+          clearTimeout(connTimeout);
+          setupConnection();
+          document.getElementById('join-status').textContent = '接続しました!役わり待ち…';
+        });
+        conn.on('error', ()=>{
+          if(!opened){
+            clearTimeout(connTimeout);
+            destroyPeer();
+            document.getElementById('join-status').textContent = '接続できませんでした。コードを確認してください。';
+          }
+        });
+      });
+      peer.on('error', err=>{
+        if(opened) return;
+        clearTimeout(timeoutId);
+        destroyPeer();
+        document.getElementById('join-status').textContent = '接続できませんでした。コードを確認してください。';
+      });
+    }, ()=>{
+      document.getElementById('join-status').textContent = '通信ライブラリを読み込めませんでした。インターネット接続を確認してもう一度お試しください。';
+    });
+  }
+
+  document.getElementById('btn-join-connect').addEventListener('click', startJoinFlow);
+
+  function setupConnection(){
+    connected = true;
+    conn.on('data', handleData);
+    conn.on('close', ()=>{
+      connected = false;
+      showBanner('接続がきれました', '相手が退出しました', true);
+      restartBtn.textContent = 'メニューへ';
+      restartBtn.onclick = ()=> location.reload();
+      restartBtn.style.display='block';
+    });
+    if(isHost){
+      // tell client their role (opposite of host)
+      const clientRole = myRole === 'oni' ? 'hider' : 'oni';
+      conn.send({t:'init', clientRole: clientRole});
+      beginOnlineGame();
+    }
+    // client waits for 'init' message in handleData
+  }
+
+  function beginOnlineGame(){
+    mode = 'online';
+    onlineScore = {hider:0, oni:0};
+    hud.style.display = 'flex';
+    hintEl.textContent = '画面をタッチしてドラッグで移動';
+    hider = freshHider();
+    oni = freshOni(1.7);
+    oni.visionRange = 130;
+    oni.visionAngle = Math.PI/3;
+    spotProgress = 0;
+    state = 'playing';
+    banner.style.display='none';
+    restartBtn.style.display='none';
+    updateOnlineRoundLabel();
+    screens.forEach(s=>document.getElementById(s).classList.add('hidden'));
+  }
+
+  function updateOnlineRoundLabel(){
+    const meBadge = myRole==='oni' ? '🔦 鬼' : '🏃 隠れる側';
+    roundLabel.textContent = meBadge + '  ' + onlineScore.hider + '-' + onlineScore.oni;
+    livesEl.innerHTML = '';
+  }
+
+  function handleData(msg){
+    if(!msg || !msg.t) return;
+    if(msg.t === 'init'){
+      myRole = msg.clientRole;
+      beginOnlineGame();
+      return;
+    }
+    if(msg.t === 'pos'){
+      // update opponent entity position
+      const opp = myRole==='oni' ? hider : oni;
+      if(!opp) return;
+      opp.x = msg.x; opp.y = msg.y;
+      if(msg.angle !== undefined) opp.angle = msg.angle, opp.facing = msg.angle;
+      return;
+    }
+    if(msg.t === 'sync'){
+      // client receives authoritative state from host
+      spotProgress = msg.spot;
+      if(msg.score) onlineScore = msg.score;
+      updateOnlineRoundLabel();
+      return;
+    }
+    if(msg.t === 'roundEnd'){
+      state = 'roundend';
+      onlineScore = msg.score;
+      updateOnlineRoundLabel();
+      if(msg.result === 'caught'){
+        showBanner(myRole==='oni' ? '捕まえた!' : '見つかった…', myRole==='oni' ? '隠れる側の勝ち: '+onlineScore.hider+'  鬼の勝ち: '+onlineScore.oni : 'つぎは頑張ろう', false);
+      } else {
+        showBanner(myRole==='hider' ? '缶蹴り成功!' : '缶を蹴られた…', '隠れる側の勝ち: '+onlineScore.hider+'  鬼の勝ち: '+onlineScore.oni, false);
+      }
+      restartBtn.textContent = 'もう一度あそぶ';
+      restartBtn.style.display = 'block';
+      restartBtn.onclick = requestOnlineRestart;
+      return;
+    }
+    if(msg.t === 'reset'){
+      hider = freshHider();
+      oni = freshOni(1.7);
+      spotProgress = 0;
+      state = 'playing';
+      banner.style.display='none';
+      restartBtn.style.display='none';
+      return;
+    }
+    if(msg.t === 'restartRequest'){
+      if(isHost) doOnlineReset();
+      return;
+    }
+  }
+
+  function requestOnlineRestart(){
+    if(isHost) doOnlineReset();
+    else if(conn && connected) conn.send({t:'restartRequest'});
+  }
+  function doOnlineReset(){
+    hider = freshHider();
+    oni = freshOni(1.7);
+    spotProgress = 0;
+    state = 'playing';
+    banner.style.display='none';
+    restartBtn.style.display='none';
+    if(conn && connected) conn.send({t:'reset'});
+  }
+
+  // ---------- shared geometry ----------
+  function dist(ax,ay,bx,by){ return Math.hypot(ax-bx,ay-by); }
+  function circleBlocksSegment(cx,cy,cr,x1,y1,x2,y2){
+    const dx=x2-x1, dy=y2-y1, len2=dx*dx+dy*dy;
+    let t = len2===0?0:((cx-x1)*dx+(cy-y1)*dy)/len2;
+    t=Math.max(0,Math.min(1,t));
+    const px=x1+t*dx, py=y1+t*dy;
+    return dist(px,py,cx,cy)<cr;
+  }
+  function segmentBlocked(x1,y1,x2,y2){
+    for(const o of obstacles){ if(circleBlocksSegment(o.x,o.y,o.r,x1,y1,x2,y2)) return true; }
+    return false;
+  }
+  function resolveObstacleCollision(e){
+    for(const o of obstacles){
+      const d = dist(e.x,e.y,o.x,o.y);
+      const minD = o.r+e.r;
+      if(d<minD && d>0){
+        const nx=(e.x-o.x)/d, ny=(e.y-o.y)/d;
+        e.x = o.x+nx*minD; e.y = o.y+ny*minD;
+      }
+    }
+    e.x = Math.max(e.r, Math.min(W-e.r, e.x));
+    e.y = Math.max(e.r, Math.min(H-e.r, e.y));
+  }
+  function inVision(){
+    const d = dist(hider.x,hider.y, oni.x,oni.y);
+    if(d>oni.visionRange) return false;
+    const ang = Math.atan2(hider.y-oni.y, hider.x-oni.x);
+    let diff = ang - oni.angle;
+    while(diff>Math.PI) diff-=Math.PI*2;
+    while(diff<-Math.PI) diff+=Math.PI*2;
+    if(Math.abs(diff) > oni.visionAngle/2) return false;
+    if(segmentBlocked(oni.x,oni.y,hider.x,hider.y)) return false;
+    return true;
+  }
+
+  // ---------- touch/drag joystick ----------
+  let joy = {active:false, baseX:0, baseY:0, curX:0, curY:0};
+  const JOY_MAX = 38;
+
+  function logicalCoords(clientX, clientY){
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX-rect.left) / rect.width * W;
+    const y = (clientY-rect.top) / rect.height * H;
+    return {x,y};
+  }
+  function onPointerDown(clientX, clientY){
+    if(state!=='playing') return;
+    const p = logicalCoords(clientX, clientY);
+    joy.active = true;
+    joy.baseX = joy.curX = p.x;
+    joy.baseY = joy.curY = p.y;
+  }
+  function onPointerMove(clientX, clientY){
+    if(!joy.active) return;
+    const p = logicalCoords(clientX, clientY);
+    joy.curX = p.x; joy.curY = p.y;
+  }
+  function onPointerUp(){ joy.active = false; }
+
+  const stageWrap = document.getElementById('stage-wrap');
+  stageWrap.addEventListener('touchstart', e=>{
+    if(e.target.closest('.screen') || e.target.closest('#status-banner')) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    onPointerDown(t.clientX, t.clientY);
+  }, {passive:false});
+  stageWrap.addEventListener('touchmove', e=>{
+    if(!joy.active) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    onPointerMove(t.clientX, t.clientY);
+  }, {passive:false});
+  stageWrap.addEventListener('touchend', e=>{ onPointerUp(); }, {passive:false});
+  stageWrap.addEventListener('touchcancel', e=>{ onPointerUp(); }, {passive:false});
+  // mouse for desktop testing
+  let mouseDown=false;
+  stageWrap.addEventListener('mousedown', e=>{
+    if(e.target.closest('.screen') || e.target.closest('#status-banner')) return;
+    mouseDown=true; onPointerDown(e.clientX, e.clientY);
+  });
+  window.addEventListener('mousemove', e=>{ if(mouseDown) onPointerMove(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', ()=>{ mouseDown=false; onPointerUp(); });
+
+  // keyboard fallback
+  const keys = {up:false,down:false,left:false,right:false};
+  window.addEventListener('keydown', e=>{
+    if(['ArrowUp','w','W'].includes(e.key)) keys.up=true;
+    if(['ArrowDown','s','S'].includes(e.key)) keys.down=true;
+    if(['ArrowLeft','a','A'].includes(e.key)) keys.left=true;
+    if(['ArrowRight','d','D'].includes(e.key)) keys.right=true;
+  });
+  window.addEventListener('keyup', e=>{
+    if(['ArrowUp','w','W'].includes(e.key)) keys.up=false;
+    if(['ArrowDown','s','S'].includes(e.key)) keys.down=false;
+    if(['ArrowLeft','a','A'].includes(e.key)) keys.left=false;
+    if(['ArrowRight','d','D'].includes(e.key)) keys.right=false;
+  });
+
+  function getMoveVector(){
+    let dx=0, dy=0;
+    if(joy.active){
+      dx = joy.curX-joy.baseX; dy = joy.curY-joy.baseY;
+      const len = Math.hypot(dx,dy);
+      if(len>JOY_MAX){ dx = dx/len*JOY_MAX; dy = dy/len*JOY_MAX; }
+      dx/=JOY_MAX; dy/=JOY_MAX;
+    } else {
+      if(keys.up) dy-=1;
+      if(keys.down) dy+=1;
+      if(keys.left) dx-=1;
+      if(keys.right) dx+=1;
+      const len = Math.hypot(dx,dy);
+      if(len>0){ dx/=len; dy/=len; }
+    }
+    return {dx,dy};
+  }
+
+  // ---------- update loop ----------
+  function updateMyEntity(){
+    const {dx,dy} = getMoveVector();
+    const moving = Math.abs(dx)>0.02 || Math.abs(dy)>0.02;
+    const meIsHider = (mode==='ai') || (mode==='online' && myRole==='hider');
+    const me = meIsHider ? hider : oni;
+    if(!me) return;
+    if(moving){
+      const angle = Math.atan2(dy,dx);
+      const mag = Math.min(1, Math.hypot(dx,dy));
+      me.x += Math.cos(angle)*me.speed*mag;
+      me.y += Math.sin(angle)*me.speed*mag;
+      me.facing = angle;
+      if(meIsHider){} else { me.angle = angle; }
+    }
+    resolveObstacleCollision(me);
+  }
+
+  function loseLifeAi(){
+    lives -= 1; updateLivesUI();
+    if(lives<=0){
+      state='gameover';
+      showBanner('つかまった…', '缶蹴りゲーム オーバー', true);
+      restartBtn.textContent = 'もう一度あそぶ';
+      restartBtn.onclick = ()=>{ lives=3; updateLivesUI(); resetAiRound(1); };
+      restartBtn.style.display='block';
+    } else {
+      state='caught';
+      showBanner('見つかった!', 'あと '+lives+' 回チャンスがあるよ', false);
+      setTimeout(()=>{
+        if(state==='caught'){
+          hider.x=HIDER_START.x; hider.y=HIDER_START.y;
+          oni.x=ONI_START.x; oni.y=ONI_START.y; seekerWpIndex=0;
+          spotProgress=0; state='playing'; banner.style.display='none';
+        }
+      },1200);
+    }
+  }
+  function checkWinAi(){
+    if(dist(hider.x,hider.y,CAN.x,CAN.y) < CAN.r+hider.r+6){
+      state='won';
+      showBanner('缶蹴り成功!', 'ラウンド '+(round+1)+' へ…', false);
+      setTimeout(()=> resetAiRound(round+1), 1400);
+    }
+  }
+
+  function updateLivesUI(){
+    livesEl.innerHTML='';
+    for(let i=0;i<3;i++){
+      const d=document.createElement('div');
+      d.className = 'life-dot'+(i<lives?'':' lost');
+      livesEl.appendChild(d);
+    }
+  }
+
+  function showBanner(big, small, showRestart){
+    bannerBig.textContent = big;
+    bannerSmall.textContent = small;
+    banner.style.display='block';
+    restartBtn.style.display = showRestart ? 'block' : 'none';
+  }
+
+  function updateOnlineHost(){
+    // send my position
+    const now = performance.now();
+    if(now-lastSendTime > SEND_INTERVAL){
+      lastSendTime = now;
+      const meIsHider = myRole==='hider';
+      const me = meIsHider ? hider : oni;
+      if(conn && connected && me){
+        conn.send({t:'pos', x:me.x, y:me.y, angle: meIsHider ? me.facing : me.angle});
+      }
+    }
+    if(!isHost) return; // only host runs authoritative logic below
+    if(state!=='playing') return;
+    if(inVision()){
+      spotProgress = Math.min(30, spotProgress+1);
+      if(spotProgress>22){
+        onlineScore.oni += 1;
+        state='roundend';
+        const payload = {t:'roundEnd', result:'caught', score:onlineScore};
+        if(conn && connected) conn.send(payload);
+        handleData(payload);
+        return;
+      }
+    } else {
+      spotProgress = Math.max(0, spotProgress-2);
+    }
+    if(dist(hider.x,hider.y,CAN.x,CAN.y) < CAN.r+hider.r+6){
+      onlineScore.hider += 1;
+      state='roundend';
+      const payload = {t:'roundEnd', result:'kicked', score:onlineScore};
+      if(conn && connected) conn.send(payload);
+      handleData(payload);
+      return;
+    }
+    if(conn && connected){
+      conn.send({t:'sync', spot:spotProgress, score:onlineScore});
+    }
+  }
+
+  function update(){
+    if(mode==='ai'){
+      if(state!=='playing') return;
+      updateMyEntity();
+      updateSeekerAI();
+      if(inVision()){
+        spotProgress+=1;
+        if(spotProgress>22) loseLifeAi();
+      } else {
+        spotProgress = Math.max(0,spotProgress-2);
+      }
+      checkWinAi();
+    } else if(mode==='online'){
+      if(!hider || !oni) return;
+      if(state==='playing') updateMyEntity();
+      updateOnlineHost();
+    }
+  }
+
+  // ---------- draw ----------
+  let prevOniPos = {x:null,y:null}, prevHiderPos = {x:null,y:null};
+
+  function drawOni(x,y,angle){
+    const t = performance.now();
+    const aggressive = spotProgress > 0;
+    const frame = Math.floor(t / (aggressive?100:260)) % 2; // club swing frame
+    const flip = Math.cos(angle) < 0 ? -1 : 1;
+
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.scale(flip,1);
+
+    // shadow
+    ctx.fillStyle='rgba(0,0,0,0.35)';
+    ctx.fillRect(-7,7,14,3);
+
+    // legs
+    ctx.fillStyle='#2a1710';
+    ctx.fillRect(-6,4,4,6);
+    ctx.fillRect(2,4,4,6);
+
+    // torso
+    ctx.fillStyle='#c94a35';
+    ctx.fillRect(-7,-4,14,9);
+    // belt
+    ctx.fillStyle='#5a3d22';
+    ctx.fillRect(-7,3,14,2);
+    // arms
+    ctx.fillStyle='#c94a35';
+    ctx.fillRect(-9,-2,3,7);
+    ctx.fillRect(6,-2,3,7);
+
+    // head
+    ctx.fillStyle='#d65c42';
+    ctx.fillRect(-5,-11,10,8);
+    // horns
+    ctx.fillStyle='#f4ecd8';
+    ctx.fillRect(-6,-14,2,4);
+    ctx.fillRect(4,-14,2,4);
+    // eyes
+    ctx.fillStyle='#1a0a05';
+    ctx.fillRect(-3,-8,2,2);
+    ctx.fillRect(1,-8,2,2);
+    // fang
+    ctx.fillStyle='#f4ecd8';
+    ctx.fillRect(-1,-4,2,2);
+
+    // club: two chunky animation frames (raised / down-strike)
+    ctx.fillStyle='#6b4a2b';
+    if(frame===0){
+      ctx.fillRect(9,-11,3,9);
+      ctx.fillStyle='#4a3320';
+      ctx.fillRect(7,-13,6,4);
+    } else {
+      ctx.fillRect(9,-1,3,9);
+      ctx.fillStyle='#4a3320';
+      ctx.fillRect(7,7,6,4);
+      ctx.fillStyle='rgba(255,200,120,0.5)';
+      ctx.fillRect(5,9,10,5);
+    }
+    ctx.restore();
+  }
+
+  function drawHider(x,y,angle,moving){
+    const t = performance.now();
+    const frame = moving ? Math.floor(t/130)%2 : 0;
+    const flip = Math.cos(angle) < 0 ? -1 : 1;
+
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.scale(flip,1);
+
+    // shadow
+    ctx.fillStyle='rgba(0,0,0,0.35)';
+    ctx.fillRect(-6,7,12,3);
+
+    // motion lines when running
+    if(moving){
+      ctx.fillStyle='rgba(244,236,216,0.35)';
+      ctx.fillRect(-14,-2,4,2);
+      ctx.fillRect(-17,2,4,2);
+    }
+
+    // legs alternate
+    ctx.fillStyle='#123330';
+    if(frame===0){
+      ctx.fillRect(-6,3,4,7);
+      ctx.fillRect(2,1,4,5);
+    } else {
+      ctx.fillRect(-6,1,4,5);
+      ctx.fillRect(2,3,4,7);
+    }
+
+    // torso
+    ctx.fillStyle='#5fd6c8';
+    ctx.fillRect(-6,-4,12,8);
+    // arms pumping
+    ctx.fillStyle='#4bb3a8';
+    if(frame===0){
+      ctx.fillRect(-9,-3,3,6);
+      ctx.fillRect(6,-5,3,6);
+    } else {
+      ctx.fillRect(-9,-5,3,6);
+      ctx.fillRect(6,-3,3,6);
+    }
+
+    // head
+    ctx.fillStyle='#f2c9a0';
+    ctx.fillRect(-4,-11,8,7);
+    // hair
+    ctx.fillStyle='#3a2b1e';
+    ctx.fillRect(-4,-12,8,3);
+    // wide panicked eyes
+    ctx.fillStyle='#1a1a1a';
+    ctx.fillRect(-2,-8,2,2);
+    ctx.fillRect(1,-8,2,2);
+    // sweat drop
+    if(moving){
+      ctx.fillStyle='rgba(160,225,255,0.9)';
+      ctx.fillRect(5,-10,2,3);
+    }
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.fillStyle = '#232c20';
+    ctx.fillRect(0,0,W,H);
+    if(mode){
+      const grd = ctx.createRadialGradient(CAN.x,CAN.y,10,CAN.x,CAN.y,140);
+      grd.addColorStop(0,'rgba(74,70,54,0.55)');
+      grd.addColorStop(1,'rgba(74,70,54,0)');
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(CAN.x,CAN.y,140,0,Math.PI*2); ctx.fill();
+
+      ctx.fillStyle='rgba(255,255,255,0.02)';
+      for(let i=0;i<40;i++){ const gx=(i*97)%W, gy=(i*53+(i%7)*30)%H; ctx.fillRect(gx,gy,2,2); }
+
+      for(const o of obstacles){
+        ctx.beginPath(); ctx.fillStyle='#1c2419'; ctx.arc(o.x,o.y+4,o.r*0.9,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle='#354a2c'; ctx.arc(o.x,o.y,o.r,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.arc(o.x-o.r*0.3,o.y-o.r*0.3,o.r*0.4,0,Math.PI*2); ctx.fill();
+      }
+
+      if(oni){
+        ctx.save();
+        ctx.translate(oni.x,oni.y); ctx.rotate(oni.angle);
+        const g2 = ctx.createRadialGradient(0,0,0,0,0,oni.visionRange);
+        const seen = spotProgress>0;
+        g2.addColorStop(0, seen? 'rgba(232,96,74,0.38)':'rgba(255,184,77,0.22)');
+        g2.addColorStop(1,'rgba(255,184,77,0)');
+        ctx.fillStyle=g2;
+        ctx.beginPath(); ctx.moveTo(0,0);
+        ctx.arc(0,0,oni.visionRange, -oni.visionAngle/2, oni.visionAngle/2);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+
+      if(spotProgress>0 && hider){
+        ctx.beginPath(); ctx.strokeStyle='rgba(232,96,74,0.9)'; ctx.lineWidth=3;
+        ctx.arc(hider.x,hider.y,hider.r+6,-Math.PI/2,-Math.PI/2+(spotProgress/22)*Math.PI*2);
+        ctx.stroke();
+      }
+
+      ctx.save();
+      const glow = ctx.createRadialGradient(CAN.x,CAN.y,2,CAN.x,CAN.y,26);
+      glow.addColorStop(0,'rgba(255,184,77,0.55)'); glow.addColorStop(1,'rgba(255,184,77,0)');
+      ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(CAN.x,CAN.y,26,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#c9c9c9'; ctx.fillRect(CAN.x-7,CAN.y-10,14,20);
+      ctx.fillStyle='#9a9a9a'; ctx.fillRect(CAN.x-7,CAN.y-10,14,4);
+      ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=1; ctx.strokeRect(CAN.x-7,CAN.y-10,14,20);
+      ctx.restore();
+
+      if(oni) drawOni(oni.x,oni.y,oni.angle);
+      if(hider){
+        const hMoving = prevHiderPos.x!==null && Math.hypot(hider.x-prevHiderPos.x, hider.y-prevHiderPos.y) > 0.05;
+        drawHider(hider.x,hider.y,hider.facing,hMoving);
+      }
+      if(oni){ prevOniPos = {x:oni.x,y:oni.y}; }
+      if(hider){ prevHiderPos = {x:hider.x,y:hider.y}; }
+
+      if(joy.active){
+        ctx.save();
+        ctx.strokeStyle='rgba(244,236,216,0.5)'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(joy.baseX,joy.baseY,JOY_MAX,0,Math.PI*2); ctx.stroke();
+        let kx=joy.curX, ky=joy.curY;
+        const dx=kx-joy.baseX, dy=ky-joy.baseY, len=Math.hypot(dx,dy);
+        if(len>JOY_MAX){ kx=joy.baseX+dx/len*JOY_MAX; ky=joy.baseY+dy/len*JOY_MAX; }
+        ctx.fillStyle='rgba(255,184,77,0.55)';
+        ctx.beginPath(); ctx.arc(kx,ky,16,0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
+  loop();
+})();
+</script>
+</body>
+</html>
