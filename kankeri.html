@@ -197,6 +197,19 @@
     margin-top: 10px;
     line-height:1.6;
   }
+
+  #countdown-text{
+    position:absolute; left:50%; top:50%;
+    transform: translate(-50%,-50%);
+    font-family:'Kosugi Maru', sans-serif;
+    font-size: 32px;
+    color: var(--amber);
+    text-shadow: 0 0 22px rgba(255,184,77,0.65), 0 2px 0 rgba(0,0,0,0.4);
+    display:none;
+    pointer-events:none;
+    z-index: 9;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -216,6 +229,7 @@
       <div class="small" id="status-small"></div>
       <button id="restart-btn">もう一度あそぶ</button>
     </div>
+    <div id="countdown-text"></div>
 
     <!-- MENU -->
     <div id="screen-menu" class="screen">
@@ -297,6 +311,21 @@
   const bannerSmall = document.getElementById('status-small');
   const restartBtn = document.getElementById('restart-btn');
   const hintEl = document.getElementById('hint');
+  const countdownEl = document.getElementById('countdown-text');
+
+  function startCountdown(onDone){
+    state = 'countdown';
+    countdownEl.style.display = 'block';
+    countdownEl.textContent = 'よーい…';
+    setTimeout(()=>{
+      countdownEl.textContent = 'スタート!';
+      setTimeout(()=>{
+        countdownEl.style.display = 'none';
+        state = 'playing';
+        if(onDone) onDone();
+      }, 550);
+    }, 750);
+  }
 
   // ---------- screen management ----------
   const screens = ['screen-menu','screen-online','screen-host-role','screen-host-wait','screen-join'];
@@ -383,9 +412,9 @@
     oniTarget = null;
     oniTargetTimer = 0;
     spotProgress = 0;
-    state = 'playing';
     banner.style.display='none';
     restartBtn.style.display='none';
+    startCountdown();
   }
   function updateSeekerAI(){
     if(inVision()){
@@ -443,6 +472,16 @@
     for(let i=0;i<4;i++) s+=chars[Math.floor(Math.random()*chars.length)];
     return 'kk-'+s;
   }
+
+  const ICE_CONFIG = {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'turn:openrelay.metered.ca:80', username:'openrelayproject', credential:'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443', username:'openrelayproject', credential:'openrelayproject' },
+      { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject' }
+    ]
+  };
 
   function ensurePeerJs(cb, onFail, waited){
     waited = waited || 0;
@@ -504,7 +543,7 @@
 
   function createHostPeer(attempt){
     const code = genCode();
-    peer = new Peer(code, {debug:0});
+    peer = new Peer(code, {debug:0, config: ICE_CONFIG});
     let opened = false;
     const timeoutId = setTimeout(()=>{
       if(!opened){
@@ -548,7 +587,7 @@
     document.getElementById('join-status').textContent = '接続中…';
 
     ensurePeerJs(()=>{
-      peer = new Peer({debug:0});
+      peer = new Peer({debug:0, config: ICE_CONFIG});
       let opened = false;
       const timeoutId = setTimeout(()=>{
         if(!opened){
@@ -622,11 +661,11 @@
     oni.visionRange = 130;
     oni.visionAngle = Math.PI/3;
     spotProgress = 0;
-    state = 'playing';
     banner.style.display='none';
     restartBtn.style.display='none';
     updateOnlineRoundLabel();
     screens.forEach(s=>document.getElementById(s).classList.add('hidden'));
+    startCountdown();
   }
 
   function updateOnlineRoundLabel(){
@@ -675,9 +714,9 @@
       hider = freshHider();
       oni = freshOni(1.7);
       spotProgress = 0;
-      state = 'playing';
       banner.style.display='none';
       restartBtn.style.display='none';
+      startCountdown();
       return;
     }
     if(msg.t === 'restartRequest'){
@@ -694,10 +733,10 @@
     hider = freshHider();
     oni = freshOni(1.7);
     spotProgress = 0;
-    state = 'playing';
     banner.style.display='none';
     restartBtn.style.display='none';
     if(conn && connected) conn.send({t:'reset'});
+    startCountdown();
   }
 
   // ---------- shared geometry ----------
