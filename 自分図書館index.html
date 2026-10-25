@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マイ自分図書館</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#333;
+ background:
+  linear-gradient(to bottom,#e9e4da 0,#e2dccf 78%,#c9a97c 78%,#b8935f 100%);
+ background-attachment:fixed;position:relative;overflow-x:hidden}
+/* お部屋の装飾 */
+.wainscot{position:fixed;left:0;right:0;bottom:22%;height:18%;background:#d9d2c3;border-top:4px solid #f5f1e8;z-index:0}
+.floor{position:fixed;left:0;right:0;bottom:0;height:22%;z-index:0;
+ background:repeating-linear-gradient(90deg,#c4a070 0 60px,#b8935f 60px 62px)}
+.window{position:fixed;top:70px;right:-10px;width:110px;height:140px;border:6px solid #f5f1e8;border-radius:4px;z-index:0;
+ background:linear-gradient(#cfe6f2,#eaf5fa);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.window:before,.window:after{content:"";position:absolute;background:#f5f1e8}
+.window:before{left:50%;top:0;bottom:0;width:5px;margin-left:-2px}
+.window:after{top:50%;left:0;right:0;height:5px;margin-top:-2px}
+.deco{position:fixed;z-index:0;line-height:1}
+.plant{bottom:18%;left:6px;font-size:3.2rem}
+.lamp{bottom:19%;right:8px;font-size:2.6rem}
+.rug{position:fixed;bottom:3%;left:50%;width:70%;max-width:420px;height:46px;transform:translateX(-50%);
+ background:#8fa3a0;border-radius:50%;opacity:.55;z-index:0}
+header{position:relative;z-index:2;text-align:center;padding:16px;font-size:1.2rem;font-weight:bold;color:#4a3a28}
+.container{position:relative;z-index:2;max-width:520px;margin:0 auto;padding:0 14px 90px}
+.add-btn{display:block;margin:6px auto 16px;background:#6b4a2b;color:#fff;border:0;padding:12px 24px;border-radius:25px;
+ font-size:1rem;font-weight:bold;cursor:pointer;box-shadow:0 3px 6px rgba(0,0,0,.25)}
+/* 本棚 */
+.case{background:#c99a52;padding:9px;border:3px solid #e0b96e;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.shelf{background:#2e1410;height:178px;padding:8px 8px 0;display:flex;align-items:flex-end;gap:2px;
+ border-bottom:9px solid #d9ac5f;box-shadow:inset 0 8px 12px rgba(0,0,0,.55);overflow:hidden}
+.shelf+.shelf{margin-top:0}
+.spine{flex:0 0 auto;position:relative;cursor:pointer;border-radius:3px;display:flex;flex-direction:column;
+ justify-content:space-between;align-items:center;padding:8px 0;writing-mode:vertical-rl;text-orientation:upright;
+ font-size:.7rem;font-weight:bold;color:#3a2a1c;overflow:hidden;
+ box-shadow:inset -3px 0 4px rgba(0,0,0,.25),inset 2px 0 3px rgba(255,255,255,.3);transition:transform .15s}
+.spine:active{transform:translateY(-6px)}
+.spine:before,.spine:after{content:"";position:absolute;left:0;right:0;height:3px;background:rgba(235,200,110,.85)}
+.spine:before{top:6px}.spine:after{bottom:6px}
+.spine .t{max-height:105px;overflow:hidden;letter-spacing:1px;padding:8px 0}
+.spine .a{font-size:.55rem;opacity:.75;max-height:40px;overflow:hidden}
+.empty{color:#e8d6b0;text-align:center;width:100%;align-self:center;font-size:.85rem}
+/* モーダル共通 */
+.modal{display:none;position:fixed;inset:0;background:rgba(20,12,6,.7);justify-content:center;align-items:center;padding:16px;z-index:100}
+.box{background:#fff;padding:22px;border-radius:12px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.box h3{margin:0 0 14px;color:#6b4423}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:.8rem;font-weight:bold;margin-bottom:5px;color:#555}
+.fg input,.fg textarea,.fg select{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:.95rem;font-family:inherit}
+.fg textarea{height:90px;resize:vertical}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.btn{padding:10px 18px;border:0;border-radius:6px;font-weight:bold;cursor:pointer}
+.p{background:#6b4423;color:#fff}.s{background:#ddd}.d{background:#c0392b;color:#fff}
+.imgs{display:flex;gap:10px;margin-bottom:14px}
+.imgbox{width:110px;height:150px;border:2px dashed #ccc;border-radius:6px;position:relative;overflow:hidden;background:#fafafa;
+ display:flex;align-items:center;justify-content:center;font-size:.75rem;color:#777;cursor:pointer}
+.imgbox img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* 本を開くビュー */
+#viewer{flex-direction:column;gap:14px;touch-action:pan-y}
+.stage{perspective:1200px}
+.book{position:relative;width:min(62vw,250px);aspect-ratio:3/4.2;user-select:none;-webkit-user-select:none;
+ animation:out .55s cubic-bezier(.2,.8,.3,1)}
+@keyframes out{from{transform:translate(var(--dx),var(--dy)) scale(.18) rotate(-4deg);opacity:.4}to{transform:none;opacity:1}}
+.inside{position:absolute;inset:0;background:#fffaf0;border-radius:3px 8px 8px 3px;padding:14px;overflow:hidden;
+ box-shadow:0 8px 22px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;font-size:.8rem}
+.inside label{font-weight:bold;color:#6b4423;font-size:.75rem}
+.inside input,.inside textarea{width:100%;border:0;border-bottom:1px dashed #b9a47a;background:transparent;font-size:.9rem;
+ padding:4px 2px;font-family:inherit;color:#333}
+.inside textarea{flex:1;resize:none;border:1px dashed #d8c9a5;border-radius:4px;padding:6px;
+ background:repeating-linear-gradient(transparent 0 21px,#e9ddc0 21px 22px);line-height:22px}
+.flip{position:absolute;inset:0;transform-origin:left center;transform-style:preserve-3d;
+ transition:transform .75s ease,opacity .3s ease .45s;z-index:2}
+.book.open .flip{transform:rotateY(-170deg);opacity:0;pointer-events:none}
+.face{position:absolute;inset:0;border-radius:3px 8px 8px 3px;backface-visibility:hidden;overflow:hidden;
+ box-shadow:0 8px 22px rgba(0,0,0,.5)}
+.cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px;
+ color:#3a2a1c;border-left:8px solid rgba(0,0,0,.25)}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cover .ct{font-size:1.15rem;font-weight:bold;line-height:1.4;border-top:2px solid rgba(235,200,110,.9);
+ border-bottom:2px solid rgba(235,200,110,.9);padding:12px 4px;width:100%}
+.cover .ca{margin-top:14px;font-size:.8rem}
+.paper{background:#f3ead4;transform:rotateY(180deg)}
+.hint{color:#f0e6d0;font-size:.8rem;text-align:center}
+.vbtns{display:flex;gap:10px}
+</style>
+</head>
+<body>
+<div class="wainscot"></div><div class="floor"></div><div class="rug"></div>
+<div class="window"></div><div class="deco plant">🪴</div><div class="deco lamp">🕯️</div>
+
+<header>📚 マイ自分図書館</header>
+<div class="container">
+  <button class="add-btn" onclick="openAdd()">＋ 本を登録する</button>
+  <div class="case" id="case"></div>
+</div>
+
+<!-- 登録 -->
+<div class="modal" id="addModal"><div class="box">
+  <h3>本を登録する</h3>
+  <div class="fg"><label>入力方法</label>
+    <select id="mode" onchange="document.getElementById('photoSec').style.display=this.value==='photo'?'block':'none'">
+      <option value="photo">写真を撮る・選ぶ（表紙・裏表紙）</option><option value="manual">手入力のみ</option></select></div>
+  <div id="photoSec"><div class="imgs">
+    <div><label style="font-size:.8rem;font-weight:bold">表紙の写真</label>
+      <div class="imgbox" onclick="coverFile.click()"><span>タップして選択</span><img id="coverPrev" style="display:none"></div>
+      <input type="file" id="coverFile" accept="image/*" hidden onchange="pick(this,'coverPrev','cover')"></div>
+    <div><label style="font-size:.8rem;font-weight:bold">裏表紙の写真</label>
+      <div class="imgbox" onclick="backFile.click()"><span>タップして選択</span><img id="backPrev" style="display:none"></div>
+      <input type="file" id="backFile" accept="image/*" hidden onchange="pick(this,'backPrev','back')"></div>
+  </div></div>
+  <div class="fg"><label>本のタイトル</label><input id="fTitle" placeholder="例：吾輩は猫である"></div>
+  <div class="fg"><label>作者名</label><input id="fAuthor" placeholder="例：夏目漱石"></div>
+  <div class="fg"><label>読みはじめた日</label><input type="date" id="fStart"></div>
+  <div class="fg"><label>読んだ日（修正可）</label><input type="date" id="fRead"></div>
+  <div class="fg"><label>感想・メモ（自由記述）</label><textarea id="fMemo" placeholder="心に残ったフレーズや感想など自由に書いてね..."></textarea></div>
+  <div class="row"><button class="btn s" onclick="closeAdd()">キャンセル</button><button class="btn p" onclick="save()">本棚にしまう</button></div>
+</div></div>
+
+<!-- 本を取り出したビュー -->
+<div class="modal" id="viewer">
+  <div class="stage"><div class="book" id="book">
+    <div class="inside">
+      <label>📖 読みはじめた日</label><input type="date" id="vStart" onchange="upd('startDate',this.value)">
+      <label>✨ 読んだ日</label><input type="date" id="vRead" onchange="upd('readDate',this.value)">
+      <label>📝 感想・メモ</label><textarea id="vMemo" placeholder="ここに自由に書けます" oninput="upd('memo',this.value)"></textarea>
+    </div>
+    <div class="flip">
+      <div class="face cover" id="front"></div>
+      <div class="face paper"></div>
+    </div>
+  </div></div>
+  <div class="hint" id="hint">← 右から左へスライドでページをめくる</div>
+  <div class="vbtns">
+    <button class="btn d" onclick="del()">削除</button>
+    <button class="btn s" onclick="closeView()">本棚に戻す</button>
+  </div>
+</div>
+
+<script>
+let books=[];try{books=JSON.parse(localStorage.getItem('my_library_books'))||[]}catch(e){}
+let cur=null,imgs={cover:'',back:''};
+const $=id=>document.getElementById(id);
+const COL=['#d8b27a','#a8c3b5','#c9544d','#e3d7bf','#6f8fa8','#8aa76b','#b5b8b1','#d9a0b0','#5a6e8f','#c2924f'];
+const persist=()=>{try{localStorage.setItem('my_library_books',JSON.stringify(books))}catch(e){alert('保存容量がいっぱいです。写真を減らしてください')}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(){
+  const c=$('case');c.innerHTML='';
+  const per=8,rows=Math.max(3,Math.ceil(books.length/per));
+  for(let r=0;r<rows;r++){
+    const sh=document.createElement('div');sh.className='shelf';
+    books.slice(r*per,r*per+per).forEach((b,k)=>{
+      const i=r*per+k,sp=document.createElement('div');sp.className='spine';
+      sp.style.background=COL[i%COL.length];
+      sp.style.height=(118+(i*37%48))+'px';sp.style.width=(30+(i*13%12))+'px';
+      sp.innerHTML=`<div class="t">${esc(b.title)}</div><div class="a">${esc(b.author)}</div>`;
+      sp.onclick=()=>openView(i,sp);sh.appendChild(sp);
+    });
+    if(!books.length&&r===1)sh.innerHTML='<div class="empty">まだ本がありません。<br>「＋ 本を登録する」から追加してね</div>';
+    c.appendChild(sh);
+  }
+}
+function openAdd(){
+  const t=new Date().toISOString().slice(0,10);
+  fStart.value=t;fRead.value=t;fTitle.value='';fAuthor.value='';fMemo.value='';
+  imgs={cover:'',back:''};coverPrev.style.display=backPrev.style.display='none';
+  mode.value='photo';photoSec.style.display='block';addModal.style.display='flex';
+}
+function closeAdd(){addModal.style.display='none'}
+function pick(inp,pid,key){
+  const f=inp.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=e=>{const im=new Image();im.onload=()=>{
+    const s=Math.min(1,500/im.width),cv=document.createElement('canvas');
+    cv.width=im.width*s;cv.height=im.height*s;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+    const d=cv.toDataURL('image/jpeg',.75);imgs[key]=d;$(pid).src=d;$(pid).style.display='block'};im.src=e.target.result};
+  rd.readAsDataURL(f);
+}
+function save(){
+  const title=fTitle.value.trim();if(!title){alert('本のタイトルを入力してください');return}
+  books.push({title,author:fAuthor.value.trim()||'作者不明',startDate:fStart.value,readDate:fRead.value,memo:fMemo.value.trim(),cover:imgs.cover,backCover:imgs.back});
+  persist();closeAdd();render();
+}
+/* 本を取り出す */
+function openView(i,sp){
+  cur=i;const b=books[i],bk=$('book');
+  const r=sp.getBoundingClientRect();
+  bk.classList.remove('open');
+  viewer.style.display='flex';
+  const w=bk.getBoundingClientRect();
+  bk.style.setProperty('--dx',(r.left+r.width/2-(w.left+w.width/2))+'px');
+  bk.style.setProperty('--dy',(r.top+r.height/2-(w.top+w.height/2))+'px');
+  bk.style.animation='none';bk.offsetHeight;bk.style.animation='';
+  const f=$('front');f.style.background=COL[i%COL.length];
+  f.innerHTML=(b.cover?`<img src="${b.cover}">`:`<div class="ct">${esc(b.title)}</div><div class="ca">${esc(b.author)}</div>`);
+  vStart.value=b.startDate||'';vRead.value=b.readDate||'';vMemo.value=b.memo||'';
+  $('hint').textContent='← 右から左へスライドでページをめくる';
+}
+function turn(open){
+  $('book').classList.toggle('open',open);
+  $('hint').textContent=open?'→ 左から右へスライドで表紙に戻る':'← 右から左へスライドでページをめくる';
+}
+function upd(k,v){if(cur!==null){books[cur][k]=v;persist()}}
+function closeView(){viewer.style.display='none';cur=null}
+function del(){if(confirm('この本を本棚から削除しますか？')){books.splice(cur,1);persist();closeView();render()}}
+/* スワイプ */
+let sx=null,sy=0;
+const down=e=>{if(e.target.closest('input,textarea'))return;sx=e.clientX;sy=e.clientY};
+const up=e=>{if(sx===null)return;const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;
+  if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)){turn(dx<0)}};
+$('book').addEventListener('pointerdown',down);
+$('book').addEventListener('pointerup',up);
+$('book').addEventListener('pointercancel',()=>sx=null);
+$('book').style.touchAction='pan-y';
+viewer.addEventListener('click',e=>{if(e.target===viewer)closeView()});
+render();
+</script>
+</body>
+</html>
