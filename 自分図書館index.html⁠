@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マイ自分図書館</title>
+    <style>
+        :root {
+            --shelf-bg: #8B5A2B;
+            --shelf-shadow: #5c3a1b;
+            --book-spine: #f4e8d1;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #fcf9f2;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #6b4423;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        /* 本棚のデザイン */
+        .bookshelf {
+            background: linear-gradient(90deg, #b5835a 0%, #d4a373 100%);
+            border: 8px solid #5c3a1b;
+            border-radius: 8px;
+            padding: 20px 10px 10px 10px;
+            min-height: 300px;
+            box-shadow: inset 0 10px 10px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-end;
+            gap: 12px;
+            position: relative;
+        }
+        .shelf-board {
+            width: 100%;
+            height: 16px;
+            background: #4a2e12;
+            border-radius: 4px;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        /* 背表紙スタイル */
+        .spine {
+            width: 45px;
+            height: 180px;
+            background-color: #d8a47f;
+            border-radius: 4px 8px 8px 4px;
+            box-shadow: 2px 3px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 4px;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #2c221e;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        .spine:hover {
+            transform: translateY(-8px);
+            box-shadow: 2px 8px 12px rgba(0,0,0,0.4);
+        }
+        .spine-title {
+            letter-spacing: 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 120px;
+        }
+        .spine-author {
+            font-size: 0.7rem;
+            color: #5c4033;
+        }
+        /* 追加ボタン */
+        .add-btn-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .add-btn {
+            background-color: #8b5a2b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+        .add-btn:active {
+            transform: scale(0.98);
+        }
+        /* モーダル（共通） */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: #6b4423;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #555;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+        .form-group textarea {
+            height: 90px;
+            resize: vertical;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-primary { background: #6b4423; color: white; }
+        .btn-secondary { background: #ddd; color: #333; }
+        .btn-danger { background: #c0392b; color: white; }
+
+        /* 本を開いたときのビュー（詳細・めくり） */
+        .book-open-view {
+            text-align: center;
+        }
+        .book-images {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .img-preview-box {
+            width: 120px;
+            height: 160px;
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            background: #fafafa;
+        }
+        .img-preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0; left: 0;
+        }
+        .img-preview-box span {
+            font-size: 0.75rem;
+            color: #777;
+            z-index: 1;
+            background: rgba(255,255,255,0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .book-details-box {
+            text-align: left;
+            background: #fdfbf7;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e6dcc3;
+            margin-top: 15px;
+        }
+        .book-details-box p {
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>📚 マイ自分図書館</header>
+
+    <div class="container">
+        <div class="add-btn-container">
+            <button class="add-btn" onclick="openAddModal()">＋ 本を登録する</button>
+        </div>
+
+        <!-- 本棚エリア -->
+        <div class="bookshelf" id="bookshelf">
+            <!-- 背表紙がここに並びます -->
+        </div>
+        <div class="shelf-board"></div>
+    </div>
+
+    <!-- 登録モーダル -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h3>本を登録する</h3>
+            <div class="form-group">
+                <label>入力方法</label>
+                <select id="inputMode" onchange="switchInputMode()" style="width:150px; padding:6px; border-radius:6px;">
+                    <option value="photo">写真を撮る・選ぶ</option>
+                    <option value="manual">手入力のみ</option>
+                </select>
+            </div>
+
+            <div id="photoInputSection">
+                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                    <div>
+                        <label>表紙の写真</label>
+                        <div class="img-preview-box" onclick="document.getElementById('coverImageFile').click()">
+                            <span>タップして選択</span>
+                            <img id="coverPreview" style="display:none;">
+                        </div>
+                        <input type="file" id="coverImageFile" accept="image/*" style="display:none;" onchange="previewImage(this, 'coverPreview')">
+                    </div>
+                    <div>
+                        <label>裏表紙の写真</label>
+                        <div class="img-preview-box" onclick="document.getElementById('backCoverImageFile').click()">
+                            <span>タップして選択</span>
+                            <img id="backCoverPreview" style="display:none;">
+                        </div>
+                        <input type="file" id="backCoverImageFile" accept="image/*" style="display:none;" onchange="previewImage(this, 'backCoverPreview')">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>本のタイトル</label>
+                <input type="text" id="bookTitle" placeholder="例：吾輩は猫である">
+            </div>
+            <div class="form-group">
+                <label>作者名</label>
+                <input type="text" id="bookAuthor" placeholder="例：夏目漱石">
+            </div>
+            <div class="form-group">
+                <label>読みはじめた日</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="form-group">
+                <label>読んだ日（写真撮影日 / 修正可）</label>
+                <input type="date" id="readDate">
+            </div>
+            <div class="form-group">
+                <label>感想・メモ（自由記述）</label>
+                <textarea id="bookMemo" placeholder="心に残ったフレーズや感想など自由に..."></textarea>
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="closeAddModal()">キャンセル</button>
+                <button class="btn btn-primary" onclick="saveBook()">本棚にしまう</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 本を取り出して開くモーダル -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content book-open-view">
+            <h2 id="detailTitle" style="color: #6b4423; margin-bottom: 5px;"></h2>
+            <p id="detailAuthor" style="color: #666; margin-top: 0;"></p>
+
+            <div class="book-images">
+                <div>
+                    <div style="font-size:0.75rem; font-weight:bold; margin-bottom:4px;">表紙</div>
+                    <div class="img-preview-box" style="width:110px; height:150px;">
+                        <img id="detailCover" style="display:none;">
+                        <span id="noCoverText" style="display:none;">画像なし</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem; font-weight:bold; margin-bottom:4px;">裏表紙</div>
+                    <div class="img-preview-box" style="width:110px; height:150px;">
+                        <img id="detailBackCover" style="display:none;">
+                        <span id="noBackCoverText" style="display:none;">画像なし</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="book-details-box">
+                <p>📖 読みはじめた日: <span id="detailStart"></span></p>
+                <p>✨ 読んだ日: <span id="detailRead"></span></p>
+                <p style="margin-top:10px; font-weight:bold;">📝 感想・メモ:</p>
+                <p id="detailMemo" style="white-space: pre-wrap; background: #fff; padding: 8px; border-radius: 4px; border: 1px solid #eee;"></p>
+            </div>
+
+            <div class="btn-row" style="justify-content: space-between; margin-top: 20px;">
+                <button class="btn btn-danger" onclick="deleteCurrentBook()">この本を削除</button>
+                <button class="btn btn-secondary" onclick="closeDetailModal()">本棚に戻す</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let books = JSON.parse(localStorage.getItem('my_library_books')) || [];
+        let currentOpenIndex = null;
+        let coverBase64 = "";
+        let backCoverBase64 = "";
+
+        // 初期表示
+        window.onload = function() {
+            renderBookshelf();
+        }
+
+        function openAddModal() {
+            // 日付の初期値を今日にセット
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('readDate').value = today;
+            document.getElementById('startDate').value = today;
+            document.getElementById('bookTitle').value = '';
+            document.getElementById('bookAuthor').value = '';
+            document.getElementById('bookMemo').value = '';
+            coverBase64 = "";
+            backCoverBase64 = "";
+            document.getElementById('coverPreview').style.display = 'none';
+            document.getElementById('backCoverPreview').style.display = 'none';
+            
+            document.getElementById('addModal').style.display = 'flex';
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').style.display = 'none';
+        }
+
+        function switchInputMode() {
+            const mode = document.getElementById('inputMode').value;
+            const photoSection = document.getElementById('photoInputSection');
+            photoSection.style.display = (mode === 'photo') ? 'block' : 'none';
+        }
+
+        // 画像プレビュー＆Base64変換
+        function previewImage(input, previewId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(previewId);
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    if (previewId === 'coverPreview') coverBase64 = e.target.result;
+                    if (previewId === 'backCoverPreview') backCoverBase64 = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function saveBook() {
+            const title = document.getElementById('bookTitle').value.trim();
+            const author = document.getElementById('bookAuthor').value.trim();
+            const startDate = document.getElementById('startDate').value;
+            const readDate = document.getElementById('readDate').value;
+            const memo = document.getElementById('bookMemo').value.trim();
+
+            if (!title) {
+                alert('本のタイトルを入力してください');
+                return;
+            }
+
+            const newBook = {
+                title,
+                author: author || '作者不明',
+                startDate,
+                readDate,
+                memo,
+                cover: coverBase64,
+                backCover: backCoverBase64
+            };
+
+            books.push(newBook);
+            localStorage.setItem('my_library_books', JSON.stringify(books));
+            closeAddModal();
+            renderBookshelf();
+        }
+
+        function renderBookshelf() {
+            const shelf = document.getElementById('bookshelf');
+            shelf.innerHTML = '';
+
+            if (books.length === 0) {
+                shelf.innerHTML = '<div style="color: #fff; width: 100%; text-align: center; padding: 40px; font-size: 0.9rem;">まだ本がありません。「本を登録する」から追加してね！</div>';
+                return;
+            }
+
+            books.forEach((book, index) => {
+                const spine = document.createElement('div');
+                spine.className = 'spine';
+                // 背表紙の色をランダムっぽくタイトルから決定
+                spine.style.backgroundColor = getBookColor(index);
+                
+                spine.innerHTML = `
+                    <div class="spine-title">${escapeHtml(book.title)}</div>
+                    <div class="spine-author">${escapeHtml(book.author)}</div>
+                `;
+                spine.onclick = () => openDetailModal(index);
+                shelf.appendChild(spine);
+            });
+        }
+
+        function openDetailModal(index) {
+            currentOpenIndex = index;
+            const book = books[index];
+
+            document.getElementById('detailTitle').innerText = book.title;
+            document.getElementById('detailAuthor').innerText = book.author;
+            document.getElementById('detailStart').innerText = book.startDate || '未設定';
+            document.getElementById('detailRead').innerText = book.readDate || '未設定';
+            document.getElementById('detailMemo').innerText = book.memo || '（感想はありません）';
+
+            // 表紙画像
+            const coverImg = document.getElementById('detailCover');
+            const noCover = document.getElementById('noCoverText');
+            if (book.cover) {
+                coverImg.src = book.cover;
+                coverImg.style.display = 'block';
+                noCover.style.display = 'none';
+            } else {
+                coverImg.style.display = 'none';
+                noCover.style.display = 'block';
+            }
+
+            // 裏表紙画像
+            const backImg = document.getElementById('detailBackCover');
+            const noBack = document.getElementById('noBackCoverText');
+            if (book.backCover) {
+                backImg.src = book.backCover;
+                backImg.style.display = 'block';
+                noBack.style.display = 'none';
+            } else {
+                backImg.style.display = 'none';
+                noBack.style.display = 'block';
+            }
+
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            currentOpenIndex = null;
+        }
+
+        function deleteCurrentBook() {
+            if (confirm('この本を本棚から削除しますか？')) {
+                books.splice(currentOpenIndex, 1);
+                localStorage.setItem('my_library_books', JSON.stringify(books));
+                closeDetailModal();
+                renderBookshelf();
+            }
+        }
+
+        function getBookColor(index) {
+            const colors = ['#d8a47f', '#a3c1ad', '#e3d7bf', '#b5b8b1', '#d9b8c4', '#c2c5cc', '#ebd4ae'];
+            return colors[index % colors.length];
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(tag) {
+                const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;' };
+                this
+                return chars[tag] || tag;
+            });
+        }
+    </script>
+</body>
+</html>
