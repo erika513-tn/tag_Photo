@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6d7d45">
+<title>おいも販売ノート</title>
+<style>
+:root{--green:#667847;--green2:#e9efdf;--cream:#fbf8f0;--ink:#302f28;--muted:#817f73;--line:#e8e3d7;--orange:#c27a3c;--red:#b65d4b;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;padding-bottom:88px}
+header{background:linear-gradient(135deg,#6d7d45,#87965c);color:white;padding:22px 18px 20px;border-radius:0 0 24px 24px}
+.brand{font-size:12px;letter-spacing:.12em;opacity:.9}.headrow{display:flex;align-items:center;justify-content:space-between;margin-top:5px}.headrow h1{font-size:23px;margin:0}.potato{font-size:30px}
+main{max-width:760px;margin:auto;padding:16px}
+h2{font-size:18px;margin:22px 0 12px}.sub{font-size:12px;color:var(--muted);margin-top:-7px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric,.panel,.formcard{background:white;border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 3px 12px #4a42200a}
+.metric small{display:block;color:var(--muted);font-size:12px}.metric strong{font-size:25px;display:block;margin-top:6px;font-weight:750}.metric em{font-style:normal;font-size:12px;color:var(--muted);margin-left:3px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.action{border:1px solid var(--line);background:#fff;border-radius:14px;padding:15px 12px;text-align:left;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer}.action span{display:block;font-size:22px;margin-bottom:7px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 3px calc(8px + env(safe-area-inset-bottom));z-index:5}
+nav button{border:0;background:none;color:var(--muted);font-size:10px;padding:4px 6px;min-width:54px}nav button b{display:block;font-size:19px;font-weight:500;margin-bottom:2px}nav button.active{color:var(--green);font-weight:700}
+.view{display:none}.view.active{display:block}
+label{font-size:12px;color:#6d6a5f;display:block;margin:12px 0 6px}input,select,textarea{width:100%;border:1px solid #ddd7ca;border-radius:10px;padding:12px;font:inherit;background:#fff;color:var(--ink);font-size:15px}textarea{min-height:70px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;background:var(--green);color:white;border-radius:12px;padding:13px 16px;font-size:15px;font-weight:700;width:100%;margin-top:15px;cursor:pointer}.btn.secondary{background:#ecefe6;color:var(--green)}.btn.danger{background:#f8e9e5;color:var(--red)}
+.segment{display:flex;background:#f0eee7;border-radius:11px;padding:4px;gap:4px}.segment button{flex:1;border:0;background:transparent;padding:10px 6px;border-radius:8px;color:var(--muted);font-size:12px}.segment button.sel{background:#fff;color:var(--green);font-weight:700;box-shadow:0 1px 4px #0001}
+.note{background:#f5f2e8;border-radius:10px;padding:11px;font-size:12px;color:#6f6a5d;line-height:1.6;margin-top:10px}
+.item{padding:12px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;font-size:13px}.item:last-child{border:0}.item strong{font-size:14px}.pill{font-size:11px;background:var(--green2);color:var(--green);padding:4px 8px;border-radius:20px;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:26px 10px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.toolbar button{border:1px solid var(--line);background:white;padding:9px 11px;border-radius:9px;font-size:12px;color:var(--ink)}
+.kpi{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.kpi:last-child{border:0}.muted{color:var(--muted)}
+.small{font-size:11px;color:var(--muted);line-height:1.6}
+.hidden{display:none!important}
+@media(min-width:600px){.cards{grid-template-columns:repeat(4,1fr)}.actions{grid-template-columns:repeat(4,1fr)}}
+
+:root{--green:#879B68;--green2:#E8EEDC;--cream:#F7F0E6;--ink:#634832;--muted:#927F70;--line:#E8DCC8;--red:#B65D4B;--white:#FFFCF5;--purple:#8B638D;--pink:#E8B6A9;--brown:#80604B}
+body{background:radial-gradient(ellipse at top,#FFFDF8 0%,var(--cream) 70%);color:var(--ink);padding-bottom:82px}
+header{display:none}
+h2{color:var(--brown)}
+.metric,.panel,.formcard{background:var(--white);border-color:var(--line);border-radius:19px;box-shadow:0 4px 14px #70553A12}
+.metric strong{color:var(--brown);font-weight:800}
+.action{border:1px solid #E7D8C3;background:linear-gradient(145deg,#FFFCF5,#F8EEDD);border-radius:19px;padding:18px 12px;text-align:center;color:var(--brown);box-shadow:0 4px 0 #E8D8C2}
+.action span{font-size:25px;margin-bottom:8px}
+nav{background:#FFFCF7F2;backdrop-filter:blur(12px);border-top-color:var(--line);padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+nav button{font-size:11px;padding:5px 12px;min-width:58px;border-radius:14px}
+nav button.active{color:var(--purple);font-weight:800;background:#F0E5EF}
+label{color:var(--brown)}
+input,select,textarea{border-color:#E3D6C5;border-radius:12px;background:#FFFEFA}
+.btn{background:var(--purple);border-radius:14px;font-weight:800;box-shadow:0 3px 0 #69496B}
+.btn.secondary{background:#E8EEDC;color:#5D754A;box-shadow:none}
+.btn.danger{box-shadow:none}
+.segment button.sel{color:var(--purple)}
+.note{background:#F7F0E6;color:var(--brown);border-radius:12px}
+.pill{background:var(--green2);color:#60784B}
+.toolbar button{border-color:var(--line);background:#FFFCF5;color:var(--brown);border-radius:10px}
+.welcome{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 17px 25px;border-radius:23px;background:linear-gradient(135deg,#EAF2F5 0%,#FFF9E9 58%,#F3E7D9 100%);border:1px solid #E8DCC8;position:relative;overflow:hidden;box-shadow:0 5px 16px #70553A12}
+.welcome:after{content:"";position:absolute;left:0;right:0;bottom:0;height:18px;background:repeating-linear-gradient(90deg,#B7C58F 0 24px,#C9D4A5 24px 48px);opacity:.65}
+.welcome-copy{position:relative;z-index:1}.welcome h1{font-size:24px;line-height:1.25;margin:5px 0;color:#70452F}.welcome p{font-size:12px;color:#80604B;margin:5px 0}
+.welcome .brand{font-size:11px;letter-spacing:.1em;color:#8B638D;font-weight:800}
+.mascot{width:112px;flex:0 0 112px;position:relative;z-index:1}.mascot svg{width:100%;height:auto;filter:drop-shadow(0 4px 2px #70452F22)}
+.monthly{margin-top:18px;padding:14px;border:1px solid #E6D2A8;border-radius:21px;background:linear-gradient(145deg,#F3E4BE,#F8EED8);box-shadow:0 4px 14px #70553A10}
+.section-ribbon{display:flex;justify-content:center;align-items:center;gap:7px;color:#fff;background:#A87850;border-radius:999px;padding:8px 16px;font-weight:800;font-size:14px;margin:0 auto 12px;width:max-content;max-width:100%;box-shadow:0 3px 0 #875D3D}
+.monthly-cards .metric{border-color:#F0E3CC;box-shadow:none}
+.fee-note{font-size:11px;color:#80604B;text-align:center;margin-top:10px}.fee-note strong{font-size:13px;color:#6E8A53}
+.menu-heading{text-align:center;margin-top:23px}
+.home-tip{margin:20px 4px 4px;padding:12px 14px;border-radius:15px;background:#EEF1E3;color:#687B50;font-size:12px;text-align:center}
+@media(min-width:600px){.cards{grid-template-columns:repeat(2,1fr)}.actions{grid-template-columns:repeat(2,1fr)}}
+
+</style>
+</head>
+<body>
+<header><div class="brand">FARMER'S SALES RECORD</div><div class="headrow"><h1>おいも販売ノート</h1><div class="potato">🍠</div></div><div style="font-size:12px;opacity:.9;margin-top:6px">わくわく広場｜納品・販売・回収をかんたん管理</div></header>
+<main>
+<section id="home" class="view active">
+ <div class="welcome">
+  <div class="welcome-copy"><div class="brand">おいも農園の販売ノート</div><h1>おいも販売ノート</h1><p>今日もおいもを届けよう！</p></div>
+  <div class="mascot" aria-label="おいもちゃん">
+   <svg viewBox="0 0 150 170" role="img" aria-label="にっこり笑う紫色のおいもちゃん">
+    <path d="M74 12 C39 10 19 39 18 79 C16 120 39 151 75 155 C112 154 134 126 132 83 C130 39 108 12 74 12Z" fill="#A95F83" stroke="#71334F" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M24 56 C31 25 52 12 75 12 C96 12 117 28 126 54 C109 62 96 54 83 49 C64 43 45 55 24 56Z" fill="#F6D86C" stroke="#71334F" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M40 80 Q46 75 52 80 M96 80 Q102 75 108 80" fill="none" stroke="#49263A" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="47" cy="91" r="4" fill="#49263A"/><circle cx="101" cy="91" r="4" fill="#49263A"/>
+    <ellipse cx="34" cy="104" rx="10" ry="6" fill="#F3A18E"/><ellipse cx="114" cy="104" rx="10" ry="6" fill="#F3A18E"/>
+    <path d="M62 104 Q75 119 89 104" fill="none" stroke="#49263A" stroke-width="4" stroke-linecap="round"/>
+    <path d="M18 104 Q4 108 5 122 M132 104 Q145 106 146 91 M55 151 L48 165 M96 151 L103 165" fill="none" stroke="#71334F" stroke-width="6" stroke-linecap="round"/>
+   </svg>
+  </div>
+ </div>
+ <section class="monthly">
+  <div class="section-ribbon">今月の実績 <span id="home-month"></span></div>
+  <div class="cards monthly-cards">
+   <div class="metric"><small>🧺 販売数</small><strong id="home-sold">0<em>袋</em></strong></div>
+   <div class="metric"><small>💰 売上金額</small><strong id="home-revenue">0<em>円</em></strong></div>
+  </div>
+  <div class="fee-note">手数料20％差引後の手取り見込み：<strong id="home-net">0円</strong></div>
+ </section>
+ <h2 class="menu-heading">🌱 メニュー</h2>
+ <div class="actions">
+  <button class="action" onclick="show('delivery')"><span>📦</span>納品する</button>
+  <button class="action" onclick="show('sales')"><span>🧺</span>販売を記録</button>
+  <button class="action" onclick="show('returns')"><span>♻️</span>回収する</button>
+  <button class="action" onclick="show('reports')"><span>📊</span>売上を見る</button>
+ </div>
+ <div class="home-tip">🍠 おいもちゃんと一緒に、今日の販売もこつこつ記録しよう。</div>
+</section>
+
+<section id="delivery" class="view">
+ <h2>📦 納品を登録</h2><div class="sub">お店に商品を持っていったときに入力</div>
+ <div class="formcard">
+  <label>納品日</label><input id="d-date" type="date">
+  <label>品種</label><select id="d-variety"><option>紅あずま</option><option>べにはるか</option><option>シルクスイート</option></select>
+  <div class="row"><div><label>納品数（袋・個）</label><input id="d-qty" type="number" min="1" inputmode="numeric" placeholder="例：20"></div><div><label>販売単価（円）</label><input id="d-price" type="number" min="0" inputmode="numeric" placeholder="例：200"></div></div>
+  <label>メモ（任意）</label><textarea id="d-memo" placeholder="サイズ、袋詰めの内容など"></textarea>
+  <button class="btn" onclick="addDelivery()">納品を保存する</button>
+ </div>
+</section>
+
+<section id="sales" class="view">
+ <h2>🧾 販売を記録</h2><div class="sub">納品分を選んで販売数を登録します</div>
+ <div class="formcard">
+  <label>販売確認日</label><input id="s-date" type="date">
+  <label>対象の納品</label><select id="s-delivery"></select>
+  <label>入力方法</label>
+  <div class="segment"><button id="mode-delta" class="sel" onclick="setMode('delta')">今回売れた数</button><button id="mode-total" onclick="setMode('total')">累計販売数</button></div>
+  <div id="delta-fields"><label>今回売れた数（個）</label><input id="s-qty" type="number" min="1" inputmode="numeric" placeholder="例：5"></div>
+  <div id="total-fields" class="hidden"><label>今回確認した累計販売数（個）</label><input id="s-total" type="number" min="0" inputmode="numeric" placeholder="例：12"><div class="note" id="total-help">前回入力した累計数との差分を自動で販売数に加算します。</div></div>
+  <div class="note" id="sales-preview">納品を登録すると、ここに対象商品が表示されます。</div>
+  <button class="btn" onclick="addSale()">販売を保存する</button>
+ </div>
+</section>
+
+<section id="returns" class="view">
+ <h2>↩️ 回収を登録</h2><div class="sub">売れ残りや販売できなくなった商品を回収したとき</div>
+ <div class="formcard">
+  <label>回収日</label><input id="r-date" type="date">
+  <label>対象の納品</label><select id="r-delivery"></select>
+  <label>回収数（個）</label><input id="r-qty" type="number" min="1" inputmode="numeric" placeholder="例：3">
+  <label>回収理由</label><select id="r-reason"><option>売れ残り</option><option>傷み・品質不良</option><option>その他</option></select>
+  <label>回収後の状態</label><select id="r-state"><option value="再販売可能">再販売可能</option><option value="廃棄">廃棄</option></select>
+  <label>メモ（任意）</label><textarea id="r-memo" placeholder="状態など"></textarea>
+  <button class="btn" onclick="addReturn()">回収を保存する</button>
+ </div>
+</section>
+
+<section id="history" class="view">
+ <h2>📚 納品・販売・回収履歴</h2>
+ <div class="toolbar"><button onclick="filterHistory('all')">すべて</button><button onclick="filterHistory('納品')">納品</button><button onclick="filterHistory('販売')">販売</button><button onclick="filterHistory('回収')">回収</button></div>
+ <div class="panel" id="history-list"><div class="empty">まだ履歴がありません。</div></div>
+ <h2>納品ごとの在庫</h2><div class="panel" id="lot-list"><div class="empty">納品を登録すると表示されます。</div></div>
+</section>
+
+<section id="reports" class="view">
+ <h2>📊 売上・販売状況</h2>
+ <div class="cards">
+  <div class="metric"><small>販売金額</small><strong id="rep-revenue">0<em>円</em></strong></div>
+  <div class="metric"><small>販売率</small><strong id="rep-rate">0<em>%</em></strong></div>
+ </div>
+ <h2>品種別の販売状況</h2><div class="panel" id="variety-report"></div>
+ <h2>月別の精算メモ</h2>
+ <div class="formcard">
+  <label>対象月</label><input id="p-month" type="month">
+  <div class="kpi"><span>アプリで集計した販売金額</span><strong id="p-gross">0円</strong></div>
+  <div class="row"><div><label>手数料・利用料（円）</label><input id="p-fee" type="number" min="0" value="1100"></div><div><label>その他控除（円）</label><input id="p-other" type="number" min="0" value="0"></div></div>
+  <label>実際の入金額（確認後に入力）</label><input id="p-paid" type="number" min="0" placeholder="通帳などで確認">
+  <label>繰越額（任意）</label><input id="p-carry" type="number" min="0" placeholder="例：1500">
+  <button class="btn" onclick="saveSettlement()">精算メモを保存</button>
+  <div class="note">手数料や振込条件は変更される場合があります。実際の精算明細を確認して入力してください。初期値1,100円は設定例です。</div>
+ </div>
+ <div class="panel" id="settlement-list" style="margin-top:12px"></div>
+</section>
+
+<section id="settings" class="view">
+ <h2>⚙️ 設定・データ管理</h2>
+ <div class="formcard">
+  <label>出品先</label><input value="わくわく広場" disabled>
+  <label>品種</label><input value="紅あずま・べにはるか・シルクスイート" disabled>
+  <label>初期手数料・利用料の目安（円）</label><input id="setting-fee" type="number" min="0" value="1100">
+  <button class="btn" onclick="saveSettings()">設定を保存</button>
+ </div>
+ <h2>データの保存について</h2><div class="panel small">この試作品は、入力したデータをこのブラウザ内に保存します。同じiPhone・同じブラウザで利用してください。ブラウザのデータ消去や端末変更で消える可能性があるため、定期的にCSV出力してください。クラウド同期はまだありません。</div>
+ <div class="toolbar"><button onclick="exportCSV()">CSVを書き出す</button><button onclick="document.getElementById('import-file').click()">CSVではなくバックアップを読み込む</button><input id="import-file" class="hidden" type="file" accept="application/json" onchange="importBackup(event)"></div>
+ <button class="btn secondary" onclick="downloadBackup()">バックアップを保存</button>
+ <button class="btn danger" onclick="clearAll()">すべての記録を削除</button>
+</section>
+</main>
+<nav>
+ <button class="active" data-tab="home" onclick="show('home')"><b>⌂</b>ホーム</button>
+ <button data-tab="history" onclick="show('history')"><b>▤</b>履歴</button>
+ <button data-tab="reports" onclick="show('reports')"><b>▥</b>分析</button>
+ <button data-tab="settings" onclick="show('settings')"><b>⚙</b>設定</button>
+</nav>
+<script>
+const KEY='oimo_sales_note_v1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"deliveries":[],"sales":[],"returns":[],"settlements":[],"settings":{"fee":1100}}');
+let saleMode='delta', historyMode='all';
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toISOString().slice(0,10);
+const yen=n=>(Number(n)||0).toLocaleString('ja-JP')+'円';
+const sum=(arr,fn)=>arr.reduce((a,x)=>a+fn(x),0);
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function show(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='sales'||id==='returns')fillDeliverySelects();render();window.scrollTo(0,0)}
+function setMode(m){saleMode=m;$('mode-delta').classList.toggle('sel',m==='delta');$('mode-total').classList.toggle('sel',m==='total');$('delta-fields').classList.toggle('hidden',m!=='delta');$('total-fields').classList.toggle('hidden',m!=='total');updateSalesPreview()}
+function fillDeliverySelects(){['s-delivery','r-delivery'].forEach(id=>{let el=$(id),old=el.value;el.innerHTML='';db.deliveries.filter(d=>remaining(d)>0).forEach(d=>{let o=document.createElement('option');o.value=d.id;o.textContent=`${d.date}｜${d.variety}｜納品${d.qty}個`;el.appendChild(o)});if(old)el.value=old});updateSalesPreview()}
+function remaining(d){return d.qty-d.sold-d.returned}
+function addDelivery(){let qty=+$('d-qty').value,price=+$('d-price').value;if(!qty||qty<1||!$('d-date').value||price<0){alert('納品日・納品数・販売単価を確認してください');return}db.deliveries.push({id:crypto.randomUUID(),date:$('d-date').value,variety:$('d-variety').value,qty,price,memo:$('d-memo').value,sold:0,returned:0,cumulative:0});$('d-qty').value='';$('d-memo').value='';alert('納品を登録しました');save();show('home')}
+function updateSalesPreview(){let d=db.deliveries.find(x=>x.id===$('s-delivery')?.value);if(!d){$('sales-preview').textContent='販売可能な納品がありません。先に納品を登録してください。';return} $('sales-preview').innerHTML=`この納品：${d.variety}／納品 ${d.qty}個／販売済み ${d.sold}個／店頭残り ${remaining(d)}個<br>前回の累計入力：${d.cumulative}個`;$('total-help').textContent=`前回の累計は${d.cumulative}個です。今回の累計を入力すると、差分を販売数として登録します。`}
+function addSale(){let d=db.deliveries.find(x=>x.id===$('s-delivery').value);if(!d){alert('対象の納品がありません');return}let qty;if(saleMode==='delta'){qty=+$('s-qty').value;if(!qty||qty<1){alert('販売数を入力してください');return}}else{let total=+$('s-total').value;if(total<d.cumulative||!$('s-total').value){alert('累計販売数は前回の数以上を入力してください');return}qty=total-d.cumulative;if(qty===0){alert('前回から販売数に変化がありません');return}d.cumulative=total}if(qty>remaining(d)){alert(`販売数が店頭残り（${remaining(d)}個）を超えています`);return}d.sold+=qty;if(saleMode==='delta')d.cumulative+=qty;db.sales.push({id:crypto.randomUUID(),date:$('s-date').value,deliveryId:d.id,variety:d.variety,qty,price:d.price,mode:saleMode});$('s-qty').value='';$('s-total').value='';alert(`${qty}個の販売を登録しました`);save();show('home')}
+function addReturn(){let d=db.deliveries.find(x=>x.id===$('r-delivery').value),qty=+$('r-qty').value;if(!d||!qty||qty<1){alert('対象の納品と回収数を確認してください');return}if(qty>remaining(d)){alert(`回収数が店頭残り（${remaining(d)}個）を超えています`);return}d.returned+=qty;db.returns.push({id:crypto.randomUUID(),date:$('r-date').value,deliveryId:d.id,variety:d.variety,qty,reason:$('r-reason').value,state:$('r-state').value,memo:$('r-memo').value});$('r-qty').value='';$('r-memo').value='';alert('回収を登録しました');save();show('home')}
+function allEvents(){let a=[];db.deliveries.forEach(d=>a.push({type:'納品',date:d.date,variety:d.variety,qty:d.qty,detail:`単価 ${yen(d.price)}`}));db.sales.forEach(s=>a.push({type:'販売',date:s.date,variety:s.variety,qty:s.qty,detail:`売上 ${yen(s.qty*s.price)}・${s.mode==='total'?'累計入力':'今回分入力'}`}));db.returns.forEach(r=>a.push({type:'回収',date:r.date,variety:r.variety,qty:r.qty,detail:`${r.reason}／${r.state}`}));return a.sort((a,b)=>b.date.localeCompare(a.date))}
+function render(){let delivered=sum(db.deliveries,d=>d.qty),sold=sum(db.deliveries,d=>d.sold),returned=sum(db.deliveries,d=>d.returned),stock=delivered-sold-returned,revenue=sum(db.sales,s=>s.qty*s.price);let month=today().slice(0,7),monthlySales=db.sales.filter(s=>s.date.startsWith(month)),monthQty=sum(monthlySales,s=>s.qty),monthRevenue=sum(monthlySales,s=>s.qty*s.price);$('home-month').textContent='（'+month.replace('-','年')+'月）';$('home-sold').innerHTML=monthQty+'<em>袋</em>';$('home-revenue').innerHTML=monthRevenue.toLocaleString('ja-JP')+'<em>円</em>';$('home-net').textContent=yen(monthRevenue*0.8);$('rep-revenue').innerHTML=revenue.toLocaleString('ja-JP')+'<em>円</em>';$('rep-rate').innerHTML=(delivered?Math.round(sold/delivered*100):0)+'<em>%</em>';
+let ev=allEvents();
+$('history-list').innerHTML=ev.filter(e=>historyMode==='all'||e.type===historyMode).map(eventHTML).join('')||'<div class="empty">該当する履歴はありません。</div>';
+$('lot-list').innerHTML=db.deliveries.map(d=>`<div class="item"><div><strong>${d.date}｜${d.variety}</strong><div class="small">納品${d.qty}・販売${d.sold}・回収${d.returned}</div></div><span class="pill">店頭 ${remaining(d)}個</span></div>`).join('')||'<div class="empty">納品を登録すると表示されます。</div>';
+let vars=['紅あずま','べにはるか','シルクスイート'];$('variety-report').innerHTML=vars.map(v=>{let ds=db.deliveries.filter(d=>d.variety===v),q=sum(ds,d=>d.qty),s=sum(ds,d=>d.sold),r=sum(ds,d=>d.returned);return `<div class="kpi"><span>${v}<br><small class="muted">納品 ${q}／回収 ${r}</small></span><strong>${s}個販売</strong></div>`}).join('');
+let month=$('p-month').value||today().slice(0,7),gross=sum(db.sales.filter(s=>s.date.startsWith(month)),s=>s.qty*s.price);$('p-gross').textContent=yen(gross);$('settlement-list').innerHTML=db.settlements.map(x=>`<div class="item"><div><strong>${x.month}</strong><div class="small">売上 ${yen(x.gross)}／控除 ${yen(x.fee+x.other)}</div></div><div><strong>${yen(x.paid)}</strong><div class="small">入金・繰越 ${yen(x.carry)}</div></div></div>`).join('')||'<div class="empty">精算メモはまだありません。</div>';
+fillDeliverySelects();
+}
+function eventHTML(e){return `<div class="item"><div><strong>${e.date}｜${e.type}</strong><div class="small">${e.variety}・${e.detail}</div></div><span class="pill">${e.type==='納品'?'+':'−'}${e.qty}個</span></div>`}
+function filterHistory(x){historyMode=x;render()}
+function saveSettlement(){let month=$('p-month').value;if(!month){alert('対象月を選んでください');return}let gross=sum(db.sales.filter(s=>s.date.startsWith(month)),s=>s.qty*s.price);db.settlements=db.settlements.filter(x=>x.month!==month);db.settlements.push({month,gross,fee:+$('p-fee').value||0,other:+$('p-other').value||0,paid:+$('p-paid').value||0,carry:+$('p-carry').value||0});save();alert('精算メモを保存しました')}
+function saveSettings(){db.settings.fee=+$('setting-fee').value||0;save();alert('設定を保存しました')}
+function exportCSV(){let rows=[['種別','日付','品種','数量','単価/詳細'],...db.deliveries.map(d=>['納品',d.date,d.variety,d.qty,d.price]),...db.sales.map(s=>['販売',s.date,s.variety,s.qty,s.price]),...db.returns.map(r=>['回収',r.date,r.variety,r.qty,r.reason+'／'+r.state])];let csv='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x??'').replaceAll('"','""')+'"').join(',')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='おいも販売記録.csv';a.click();URL.revokeObjectURL(a.href)}
+function downloadBackup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='おいも販売ノート_backup.json';a.click();URL.revokeObjectURL(a.href)}
+function importBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.deliveries||!x.sales||!x.returns)throw 0;db=x;save();alert('バックアップを読み込みました')}catch(_){alert('バックアップファイルを読み込めませんでした')}};r.readAsText(f)}
+function clearAll(){if(confirm('すべての記録を削除します。事前にバックアップしましたか？')){localStorage.removeItem(KEY);db={deliveries:[],sales:[],returns:[],settlements:[],settings:{fee:1100}};save()}}
+['d-date','s-date','r-date'].forEach(id=>$(id).value=today());$('p-month').value=today().slice(0,7);$('setting-fee').value=db.settings.fee??1100;$('p-fee').value=db.settings.fee??1100;$('p-month').addEventListener('change',render);$('s-delivery').addEventListener('change',updateSalesPreview);render();
+</script>
+</body></html>
